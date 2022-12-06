@@ -1,0 +1,1 @@
+hardware\rockchip\camera\etc\camera
