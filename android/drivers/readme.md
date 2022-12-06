@@ -1,4 +1,4 @@
-# How to add VEYE mipi cameras on RK356x
+# How to add VEYE mipi cameras on RK356x(Android)
 ### Introduction
 Use firefly ROC-RK3566-PC as an example.
 This document references this [link](https://wiki.t-firefly.com/en/ROC-RK3566-PC/ "link") from this Firefly.Please check it together with this documentation.
