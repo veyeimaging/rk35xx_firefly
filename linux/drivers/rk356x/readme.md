@@ -1,6 +1,6 @@
 # How to add VEYE mipi cameras on RK356x
 ### Introduction
-Use firefly ROC-RK3566-PC as an example. RK358x is now using linux kernel version 4.10.
+Use firefly ROC-RK3566-PC as an example. RK356x is now using linux kernel version 4.19
 This document references this [link](https://wiki.t-firefly.com/en/ROC-RK3566-PC/ "link") from this Firefly.Please check it together with this documentation.
 ### Build the standard version
 Refer to this [link](https://wiki.t-firefly.com/en/ROC-RK3566-PC/prepare_compile_linux.html "link"), Build the build environment.

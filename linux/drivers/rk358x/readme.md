@@ -10,10 +10,8 @@ Refer to this [link](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/linux_compile_
 2. Put the dts file into the kernel\arch\arm64\boot\dts\rockchip directory.
 3. For RK3588, Modify the . /arch/arm64/configs/firefly-linux.config file to add VEYE camera option.
 ### Compile firmware to support VEYE camera version
-To compile the kernel and dtb in the same way as the standard version, execute the following command.
-`./build.sh extboot`
-Execute the following command to compile and get the installation package.
-`./build.sh kerneldeb`
+
+`./build.sh`
 
 
 
