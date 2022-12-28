@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2021 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+/dts-v1/;
+
+#include "roc-rk3588s-pc.dtsi"
+#include "roc-rk3588s-pc-v10-diff.dtsi"
+#include "rk3588-roc-pc-cam-veyecam2m.dtsi"
