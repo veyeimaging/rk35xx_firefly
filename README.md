@@ -1,7 +1,7 @@
 # How to use VEYE and CS series cameras on Firefly's RK35XX board
 This is a mirror of [our wiki article](http://wiki.veye.cc/index.php/VEYE_CS_Camera_on_Firfly_Boards).
 ## Overview
-VEYE series and CS series cameras are the video streaming mode MIPI cameras we designed. This article takes Firefly's ROC-RK3566-PC board as an example to introduce how to connect VEYE and CS series cameras to RK3566/RK3568/RK3588 system.
+VEYE series and CS series cameras are the video streaming mode MIPI cameras we designed. This article takes Firefly's ROC-RK3566-PC and ROC-RK3588S-PC board as an example to introduce how to connect VEYE and CS series cameras to RK3566/RK3568/RK3588 system.
 We provide drivers for both Linux(Ubuntu) and Android.
 ## Camera Module List
 
@@ -33,7 +33,7 @@ includes：
 In addition, a compiled linux kernel installation package and Android image is provided in the releases.
 
 ## Ubuntu
-### Upgrade Firefly Ubuntu system
+### Upgrade Firefly Ubuntu system(RK356x)
 #### Overview
 This section describes how to update the RK35xx system to support our camera modules.
 
@@ -59,6 +59,12 @@ sudo dpkg -i linux-image-4.19.232_4.19.232-21_arm64.deb
 ```
 If the version does not match, it needs to be compiled from the source code.
 
+### Upgrade Firefly Ubuntu system(RK358x)
+
+For the ROC-RK3588S-PC, we have provided an image of the release system. Download this image file from this [link](https://www.mediafire.com/folder/xplekyz4sb3mx/rk35xx_firefly_images).
+
+Refer to the [Firefly documentation](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/upgrade_bootmode.html) to burn in a standard system.
+
 ### Check system status
 Run the following command to confirm whether the camera is probed.
 - VEYE-MIPI-XXX
@@ -77,7 +83,7 @@ The output message appears as shown below.
 
 `video0`
 
-The camera can be seen connected to the i2c-4.
+For ROC-RK3566-PC, the camera is connected to i2c-4, for ROC-RK3588S-PC to i2c-7.
 
 ### Samples
 #### v4l2-ctl
@@ -91,15 +97,17 @@ The camera can be seen connected to the i2c-4.
 `v4l2-ctl --list-formats-ext`
 
 ##### Snap YUV picture
-`v4l2-ctl --set-fmt-video=width=1920,height=1080,pixelformat=UYVY --stream-mmap --stream-count=1 --stream-to=uyvy-1920x1080.yuv`
 
 `v4l2-ctl --set-fmt-video=width=1920,height=1080,pixelformat='NV12' --stream-mmap --stream-count=100 --stream-to=nv12-1920x1080.yuv`
+
+For RK3566, also:
+`v4l2-ctl --set-fmt-video=width=1920,height=1080,pixelformat=UYVY --stream-mmap --stream-count=1 --stream-to=uyvy-1920x1080.yuv`
 
 Play YUV picture
 `ffplay -f rawvideo -video_size 1920x1080 -pix_fmt nv12 nv12-1920x1080.yuv`
 
 ##### Check frame rate
-`v4l2-ctl --set-fmt-video=width=1920,height=1080,pixelformat=UYVY --stream-mmap --stream-count=-1 --stream-to=/dev/null`
+`v4l2-ctl --set-fmt-video=width=1920,height=1080,pixelformat=NV12 --stream-mmap --stream-count=-1 --stream-to=/dev/null`
 
 #### yavta
 ```
@@ -107,7 +115,7 @@ git clone https://github.com/veyeimaging/yavta.git
 
 cd yavta;make
 
-./yavta -c1 -Fuyvy-1920x1080.yuv --skip 0 -f UYVY -s 1920x1080 /dev/video0
+./yavta -c1 -Fnv12-1920x1080.yuv --skip 0 -f NV12 -s 1920x1080 /dev/video0
 ```
 
 #### gstreamer
@@ -123,7 +131,14 @@ We provide several routines to import camera data into opencv. See the samples d
 In addition, [this page from Firefly](https://wiki.t-firefly.com/en/Firefly-Linux-Guide/demo_OpenCV_support.html) has some reference value.
 
 ###  Compile drivers and dtb from source code
-[https://github.com/veyeimaging/rk356x_firefly/tree/main/linux/drivers](https://github.com/veyeimaging/rk356x_firefly/tree/main/linux/drivers)
+- RK356x
+
+[https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk356x](https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk356x)
+
+- RK358x
+
+[https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk358x](https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk358x)
+
 
 ## i2c script for parameter configuration
 
@@ -142,7 +157,7 @@ Video Control Toolkits Manual ：[CS-MIPI-X I2C](http://wiki.veye.cc/index.php/C
 ## Android
 ### Update Android system
 
-Download the latest rk356x_firefly_android.tar.gz from https://github.com/veyeimaging/rk356x_firefly/releases/ .
+Download the latest rk356x_firefly_android.tar.gz from https://github.com/veyeimaging/rk35xx_firefly/releases/ .
 Burn the system refer to firefly's documentation.
 ### Check system status
 
@@ -173,13 +188,21 @@ The camera can be opened using the camera program that comes with the system.
 
 https://github.com/veyeimaging/rk356x_firefly/tree/main/android/drivers
 
+## Known issues
+
+1. For RK3588, the current version of the system prompts an error when getting UYVY data format: rkcif-mipi-lvds2: ERROR: csi size err, intstat:0x1000000, lastline:1!!!
+
 ## References
 - ROC-RK3566-PC Manual
 [https://wiki.t-firefly.com/en/ROC-RK3566-PC/](https://wiki.t-firefly.com/en/ROC-RK3566-PC/)
+- ROC-RK3588S-PC Manual
+[https://wiki.t-firefly.com/en/ROC-RK3588S-PC/](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/)
 - Firefly Linux User Guide
 [https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html](https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html)
 
 ## Document History
+- 2022-12-28
+Add support for RK358x.
 - 2022-12-06
 Support Android system.
 - 2022-10-22
