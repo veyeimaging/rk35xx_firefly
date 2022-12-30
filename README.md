@@ -158,7 +158,7 @@ Video Control Toolkits Manual ：[CS-MIPI-X I2C](http://wiki.veye.cc/index.php/C
 ## Android
 ### Update Android system
 
-Download the latest rk356x_firefly_android.tar.gz from https://github.com/veyeimaging/rk35xx_firefly/releases/ .
+Download the latest rk356x_firefly_android.tar.gz or rk358x_firefly_android.tar.gz from https://github.com/veyeimaging/rk35xx_firefly/releases/ .
 Burn the system refer to firefly's documentation.
 ### Check system status
 
@@ -187,7 +187,11 @@ The camera can be opened using the camera program that comes with the system.
 
 ### Compile system from source code
 
-https://github.com/veyeimaging/rk356x_firefly/tree/main/android/drivers
+- RK356x
+https://github.com/veyeimaging/rk35xx_firefly/tree/main/android/rk356x/drivers
+
+- RK358x
+https://github.com/veyeimaging/rk35xx_firefly/tree/main/android/rk358x/drivers
 
 ## Known issues
 
