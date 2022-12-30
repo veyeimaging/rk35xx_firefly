@@ -61,7 +61,8 @@ If the version does not match, it needs to be compiled from the source code.
 
 ### Upgrade Firefly Ubuntu system(RK358x)
 
-For the ROC-RK3588S-PC, we have provided an image of the release system. Download this image file from this [link](https://www.mediafire.com/folder/xplekyz4sb3mx/rk35xx_firefly_images).
+For the ROC-RK3588S-PC, we have provided an image of the release system. 
+Download the latest rk358x_firefly_ubuntu.tar.gz from https://github.com/veyeimaging/rk356x_firefly/releases/ .
 
 Refer to the [Firefly documentation](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/upgrade_bootmode.html) to burn in a standard system.
 
