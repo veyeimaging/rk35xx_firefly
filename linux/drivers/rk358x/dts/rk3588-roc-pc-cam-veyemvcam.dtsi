@@ -29,7 +29,7 @@
 
 			mipidphy0_in_ucam0: endpoint@1 {
 				reg = <1>;
-				remote-endpoint = <&veyecam2m_out0>;
+				remote-endpoint = <&mvcam_out0>;
 				data-lanes = <1 2>;
 			};
 		};
@@ -53,15 +53,15 @@
 &i2c7 {
         status = "okay";
         pinctrl-names = "default";
-        pinctrl-0 = <&i2c7m2_xfer>;
+	    pinctrl-0 = <&i2c7m2_xfer>;
 
-        veyecam2m: veyecam2m@3b{
-               compatible = "veye,veyecam2m";
+        mvcam: mvcam@3b{
+               compatible = "veye,mvcam";
                reg = <0x3b>;
-	       clocks = <&cru CLK_MIPI_CAMARAOUT_M1>;
+               clocks = <&cru CLK_MIPI_CAMARAOUT_M1>;
                clock-names = "xvclk";
                pinctrl-names = "default";
-	       pinctrl-0 = <&mipim1_camera1_clk>;
+	           pinctrl-0 = <&mipim1_camera1_clk>;
                power-domains = <&power RK3588_PD_VI>;
 
                //power-gpios = <&gpio4 RK_PB5 GPIO_ACTIVE_LOW>;
@@ -75,7 +75,7 @@
                rockchip,camera-module-name = "NC";
                rockchip,camera-module-lens-name = "NC";
                port {
-                        veyecam2m_out0: endpoint {
+                        mvcam_out0: endpoint {
                                remote-endpoint = <&mipidphy0_in_ucam0>;
                                data-lanes = <1 2>;
                        };
@@ -132,7 +132,7 @@
 
 &rkcif_mipi_lvds2 {
 	status = "okay";
-	firefly,yuv_camera;
+	//firefly,yuv_camera;
 
 	port {
 		cif_mipi2_in0: endpoint {

@@ -1,0 +1,94 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+&csi2_dphy0 {
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mipi_in_ucam3: endpoint@4 {
+				reg = <4>;
+				remote-endpoint = <&mvcam_out>;
+				data-lanes = <1 2>;
+			};
+		};
+		port@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			csidphy_out: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&isp0_in>;
+			};
+		};
+	};
+};
+
+&csi2_dphy1 {
+	status = "disabled";
+};
+
+&csi2_dphy2 {
+	status = "disabled";
+};
+
+&rkisp_vir0 {
+	status = "okay";
+
+	port {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		isp0_in: endpoint@0 {
+			reg = <0>;
+			remote-endpoint = <&csidphy_out>;
+		};
+	};
+};
+
+&rkisp_vir1 {
+	status = "disabled";
+};
+
+&i2c4 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	mvcam: mvcam@3b{
+        status = "okay";
+        compatible = "veye,mvcam";
+        reg = <0x3b>;
+        clocks = <&cru CLK_CIF_OUT>;
+        clock-names = "xvclk";
+        //avdd-supply = <&vcc_mipi>;
+        power-domains = <&power RK3568_PD_VI>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&cif_clk>;
+
+        //power-gpios = <&pca9555 PCA_IO0_4 GPIO_ACTIVE_HIGH>;
+        reset-gpios = <&gpio4 RK_PB0 GPIO_ACTIVE_HIGH>;
+        pwdn-gpios = <&gpio4 RK_PB7 GPIO_ACTIVE_HIGH>;
+
+        firefly,clkout-enabled-index = <0>;
+        rockchip,camera-module-index = <0>;
+        rockchip,camera-module-facing = "back";
+        rockchip,camera-module-name = "NC";
+        rockchip,camera-module-lens-name = "NC";
+        port {
+			mvcam_out: endpoint {
+				remote-endpoint = <&mipi_in_ucam3>;
+                data-lanes = <1 2>;
+            };
+        };
+    };
+};

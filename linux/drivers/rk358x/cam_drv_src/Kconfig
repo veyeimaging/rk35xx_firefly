@@ -1323,7 +1323,14 @@ config VIDEO_VEYECAM2M
        depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
        depends on MEDIA_CAMERA_SUPPORT
        help
-               Driver for veye 2m camera camera.
+               Driver for veye 2m camera.
+               
+config VIDEO_VEYEMVCAM
+       tristate "VEYE MV series camera support."
+       depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+       depends on MEDIA_CAMERA_SUPPORT
+       help
+               Driver for veye mv series camera.
                
 config VIDEO_OS03B10
 	tristate "OmniVision OS03B10 sensor support"

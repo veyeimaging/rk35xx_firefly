@@ -14,8 +14,9 @@
 * using single camera xc7160        --->  rk3566-firefly-roc-pc-cam-8ms1m.dtsi
 * using dual camera gc2053/gc2093   --->  rk3566-firefly-roc-pc-cam-2ms2m.dtsi
 * using veye camera 2m              --->  rk3566-firefly-roc-pc-cam-veyecam2m.dtsi
+* using mv camera                   --->  rk3566-firefly-roc-pc-cam-veyemvcam.dtsi
 */
-#include "rk3566-firefly-roc-pc-cam-veyecam2m.dtsi"
+#include "rk3566-firefly-roc-pc-cam-veyemvcam.dtsi"
 
 / {
     model = "Firefly RK3566-ROC-PC HDMI(Linux)";

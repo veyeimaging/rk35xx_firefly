@@ -48,7 +48,7 @@
 
 /* Pixel rate is fixed at 74.25M for all the modes */
 #define VEYECAM2M_PIXEL_RATE		74250000
-/*mipi clk is 297Mhz */
+/*mipi clk is 297Mhz */ 
 #define VEYECAM2M_DEFAULT_LINK_FREQ	297000000
 
 
