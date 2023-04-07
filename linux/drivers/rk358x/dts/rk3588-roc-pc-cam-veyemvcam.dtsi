@@ -65,8 +65,8 @@
                power-domains = <&power RK3588_PD_VI>;
 
                //power-gpios = <&gpio4 RK_PB5 GPIO_ACTIVE_LOW>;
-               reset-gpios = <&gpio0 RK_PD5 GPIO_ACTIVE_HIGH>;
-               pwdn-gpios = <&gpio4 RK_PB4 GPIO_ACTIVE_HIGH>;
+               reset-gpios = <&gpio3 RK_PC4 GPIO_ACTIVE_HIGH>;
+               pwdn-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_HIGH>;
 
                //avdd-supply = <&vcc_mipidcphy0>;
                //firefly,clkout-enabled-index = <0>;

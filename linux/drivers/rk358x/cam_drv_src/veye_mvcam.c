@@ -29,10 +29,9 @@
 #include <linux/pinctrl/consumer.h>
 #include <linux/of_gpio.h>
 
-#define DRIVER_VERSION			KERNEL_VERSION(0, 0x01, 0x01)
+#define DRIVER_VERSION			KERNEL_VERSION(0, 0x01, 0x03) 
 
-#define OF_CAMERA_PINCTRL_STATE_DEFAULT	"rockchip,camera_default"
-#define OF_CAMERA_PINCTRL_STATE_SLEEP	"rockchip,camera_sleep"
+
 #define mvcam_NAME			"mvcam"
 //reserved
 /* Embedded metadata stream structure */
@@ -103,7 +102,8 @@ struct mvcam {
 	struct media_pad pad;
 
     u32    model_id; 
-	struct gpio_desc *reset_gpio;
+	struct gpio_desc	*reset_gpio; //ADP-MV2 do not use this
+	struct gpio_desc	*pwdn_gpio;
     struct regulator_bulk_data supplies[MVCAM_NUM_SUPPLIES];
     
     struct i2c_client *client;
@@ -201,7 +201,7 @@ static int mvcam_writel_reg(struct i2c_client *client,
 	return 0;
 }
 
-int mvcam_read(struct i2c_client *client, u16 addr, u32 *value)
+static int mvcam_read(struct i2c_client *client, u16 addr, u32 *value)
 {
 	int ret;
 	int count = 0;
@@ -219,7 +219,7 @@ int mvcam_read(struct i2c_client *client, u16 addr, u32 *value)
 	return ret;
 }
 
-int mvcam_write(struct i2c_client *client, u16 addr, u32 value)
+static int mvcam_write(struct i2c_client *client, u16 addr, u32 value)
 {
 	int ret;
 	int count = 0;
@@ -234,7 +234,7 @@ int mvcam_write(struct i2c_client *client, u16 addr, u32 value)
 }
 
 /* Write a list of registers */
-int mvcam_write_regs(struct i2c_client *client,
+static int __maybe_unused  mvcam_write_regs(struct i2c_client *client,
 			     const struct reg_mv *regs, u32 len)
 {
 	unsigned int i;
@@ -264,78 +264,6 @@ static u32 bit_count(u32 n)
     return n ;
 }
 
-/* Power management functions */
-static int mvcam_power_on(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct mvcam *mvcam = to_mvcam(sd);
-	int ret;
-VEYE_TRACE
-	ret = regulator_bulk_enable(MVCAM_NUM_SUPPLIES,
-				    mvcam->supplies);
-	if (ret) {
-		dev_err(&client->dev, "%s: failed to enable regulators\n",
-			__func__);
-		return ret;
-	}
-    
-	gpiod_set_value_cansleep(mvcam->reset_gpio, 1);
-	usleep_range(STARTUP_MIN_DELAY_US,
-		     STARTUP_MIN_DELAY_US + STARTUP_DELAY_RANGE_US);
-    debug_printk("mvcam_power_on\n");
-	return 0;
-}
-
-static int mvcam_power_off(struct device *dev)
-{
-    
-	struct i2c_client *client = to_i2c_client(dev);
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct mvcam *mvcam = to_mvcam(sd);
-    VEYE_TRACE
-    //do not really power off, because we might use i2c script at any time
-	gpiod_set_value_cansleep(mvcam->reset_gpio, 0);
-	regulator_bulk_disable(MVCAM_NUM_SUPPLIES, mvcam->supplies);
-    debug_printk("mvcam_power_off, not really off\n");
-	return 0;
-}
-
-
-static int mvcam_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
-{
-	struct mvcam *mvcam = to_mvcam(sd);
-	struct v4l2_mbus_framefmt *try_fmt =
-		v4l2_subdev_get_try_format(sd, fh->pad, 0);
-    
-//	struct v4l2_mbus_framefmt *try_fmt_meta =
-//		v4l2_subdev_get_try_format(sd, fh->pad, METADATA_PAD);
-    struct v4l2_rect *try_crop;
-    VEYE_TRACE
-    mutex_lock(&mvcam->mutex);
-	/* Initialize try_fmt */
-	try_fmt->width = mvcam->max_width;
-	try_fmt->height = mvcam->max_height;
-	try_fmt->code = mvcam->supported_formats[0].mbus_code;
-	try_fmt->field = V4L2_FIELD_NONE;
-
-	/* Initialize try_fmt for the embedded metadata pad */
-/*	try_fmt_meta->width = MVCAM_EMBEDDED_LINE_WIDTH;
-	try_fmt_meta->height = MVCAM_NUM_EMBEDDED_LINES;
-	try_fmt_meta->code = MEDIA_BUS_FMT_SENSOR_DATA;
-	try_fmt_meta->field = V4L2_FIELD_NONE;
-*/
-    /* Initialize try_crop rectangle. */
-	try_crop = v4l2_subdev_get_try_crop(sd, fh->pad, 0);
-	try_crop->top = 0;
-	try_crop->left = 0;
-	try_crop->width = mvcam->max_width;
-	try_crop->height = mvcam->max_height;
-    
-    mutex_unlock(&mvcam->mutex);
-    
-	return 0;
-}
 
 static int mvcam_setroi(struct mvcam *mvcam)
 {
@@ -660,7 +588,7 @@ static int mvcam_g_frame_interval(struct v4l2_subdev *sd,
     VEYE_TRACE
 	mutex_lock(&mvcam->mutex);
     fract_fps.numerator = 100;
-    fract_fps.denominator = mvcam->max_fps*100;
+    fract_fps.denominator = mvcam->cur_fps*100;
 	fi->interval = fract_fps;
 	mutex_unlock(&mvcam->mutex);
 
@@ -853,113 +781,6 @@ VEYE_TRACE
 	return 0;
 }
 
-/* Start streaming */
-static int mvcam_start_streaming(struct mvcam *mvcam)
-{
-	struct i2c_client *client = mvcam->client;
-	int ret;
-    VEYE_TRACE
-	/* Apply customized values from user */
- //   ret =  __v4l2_ctrl_handler_setup(mvcam->sd.ctrl_handler);
-    debug_printk("mvcam_start_streaming \n");
-	/* set stream on register */
-    ret = mvcam_write(client, Image_Acquisition,1);
-	if (ret)
-		return ret;
-
-	/* some v4l2 ctrls cannot change during streaming */
-    mvcam_v4l2_grab(mvcam,true);
-	return ret;
-}
-
-/* Stop streaming */
-static int mvcam_stop_streaming(struct mvcam *mvcam)
-{
-	struct i2c_client *client = mvcam->client;
-	int ret;
-VEYE_TRACE
-	/* set stream off register */
-    ret = mvcam_write(client, Image_Acquisition,0);
-	if (ret)
-		dev_err(&client->dev, "%s failed to set stream\n", __func__);
-    debug_printk("mvcam_stop_streaming \n");
-    
-   	 mvcam_v4l2_grab(mvcam,false);
-
-	/*
-	 * Return success even if it was an error, as there is nothing the
-	 * caller can do about it.
-	 */
-	return 0;
-}
-
-
-static int mvcam_set_stream(struct v4l2_subdev *sd, int enable)
-{
-	struct mvcam *mvcam = to_mvcam(sd);
-	int ret = 0;
-	mutex_lock(&mvcam->mutex);
-	if (mvcam->streaming == enable) {
-		mutex_unlock(&mvcam->mutex);
-		return 0;
-	}
-VEYE_TRACE
-	if (enable) {
-
-		/*
-		 * Apply default & customized values
-		 * and then start streaming.
-		 */
-		ret = mvcam_start_streaming(mvcam);
-		if (ret)
-			goto err_unlock;
-	} else {
-		mvcam_stop_streaming(mvcam);
-	}
-	mvcam->streaming = enable;
-	mutex_unlock(&mvcam->mutex);
-
-	return ret;
-
-err_unlock:
-	mutex_unlock(&mvcam->mutex);
-
-	return ret;
-}
-
-static int __maybe_unused mvcam_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct mvcam *mvcam = to_mvcam(sd);
-VEYE_TRACE
-	if (mvcam->streaming)
-		mvcam_stop_streaming(mvcam);
-
-	return 0;
-}
-
-static int __maybe_unused mvcam_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct mvcam *mvcam = to_mvcam(sd);
-	int ret;
-
-	if (mvcam->streaming) {
-		ret = mvcam_start_streaming(mvcam);
-		if (ret)
-			goto error;
-	}
-    VEYE_TRACE
-	return 0;
-
-error:
-	mvcam_stop_streaming(mvcam);
-	mvcam->streaming = 0;
-	return ret;
-}
-
 
 
 static void mvcam_get_module_inf(struct mvcam *mvcam,
@@ -1000,6 +821,9 @@ static long mvcam_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
     case RKMODULE_GET_CHANNEL_INFO:
 		ch_info = (struct rkmodule_channel_info *)arg;
 		ret = mvcam_get_channel_info(mvcam, ch_info);
+		break;
+    case RKMODULE_GET_CSI_DSI_INFO:
+		*(int *)arg = RKMODULE_CSI_INPUT;
 		break;
 	default:
 		ret = -ENOIOCTLCMD;
@@ -1056,6 +880,10 @@ static long mvcam_compat_ioctl32(struct v4l2_subdev *sd,
 				ret = -EFAULT;
 		}
 		kfree(ch_info);
+        break;
+    case RKMODULE_GET_CSI_DSI_INFO:
+		*(int *)arg = RKMODULE_CSI_INPUT;
+		break;
 	default:
 		ret = -ENOIOCTLCMD;
 		break;
@@ -1066,44 +894,6 @@ static long mvcam_compat_ioctl32(struct v4l2_subdev *sd,
 #endif
 
 
-static const struct v4l2_subdev_core_ops mvcam_core_ops = {
-    .log_status = v4l2_ctrl_subdev_log_status,
-    .subscribe_event = v4l2_ctrl_subdev_subscribe_event,
-    .unsubscribe_event = v4l2_event_subdev_unsubscribe,
-    
-    //.s_power = mvcam_s_power,
-    .ioctl = mvcam_ioctl,
-#ifdef CONFIG_COMPAT
-    .compat_ioctl32 = mvcam_compat_ioctl32,
-#endif
-};
-
-static const struct v4l2_subdev_video_ops mvcam_video_ops = {
-	.s_stream = mvcam_set_stream,
-    .g_frame_interval = mvcam_g_frame_interval,
-};
-
-static const struct v4l2_subdev_pad_ops mvcam_pad_ops = {
-	.enum_mbus_code = mvcam_csi2_enum_mbus_code,
-	.get_fmt = mvcam_csi2_get_fmt,
-	.set_fmt = mvcam_csi2_set_fmt,
-	.enum_frame_size = mvcam_csi2_enum_framesizes,
-	.get_selection = mvcam_get_selection,
-	.set_selection = mvcam_set_selection,
-    .get_mbus_config = mvcam_g_mbus_config,
-};
-
-static const struct v4l2_subdev_ops mvcam_subdev_ops = {
-	.core = &mvcam_core_ops,
-	.video = &mvcam_video_ops,
-	.pad = &mvcam_pad_ops,
-};
-
-#ifdef CONFIG_VIDEO_V4L2_SUBDEV_API
-static const struct v4l2_subdev_internal_ops mvcam_internal_ops = {
-	.open = mvcam_open,
-};
-#endif
 
 static void mvcam_free_controls(struct mvcam *mvcam)
 {
@@ -1198,6 +988,250 @@ VEYE_TRACE
 VEYE_TRACE
 err:
 	return -ENODEV;
+}
+
+/* Start streaming */
+static int mvcam_start_streaming(struct mvcam *mvcam)
+{
+	struct i2c_client *client = mvcam->client;
+	int ret;
+    VEYE_TRACE
+	/* Apply customized values from user */
+ //   ret =  __v4l2_ctrl_handler_setup(mvcam->sd.ctrl_handler);
+    debug_printk("mvcam_start_streaming \n");
+	/* set stream on register */
+    ret = mvcam_write(client, Image_Acquisition,1);
+	if (ret)
+		return ret;
+
+	/* some v4l2 ctrls cannot change during streaming */
+    mvcam_v4l2_grab(mvcam,true);
+	return ret;
+}
+
+/* Stop streaming */
+static int mvcam_stop_streaming(struct mvcam *mvcam)
+{
+	struct i2c_client *client = mvcam->client;
+	int ret;
+VEYE_TRACE
+	/* set stream off register */
+    ret = mvcam_write(client, Image_Acquisition,0);
+	if (ret)
+		dev_err(&client->dev, "%s failed to set stream\n", __func__);
+    debug_printk("mvcam_stop_streaming \n");
+    
+   	 mvcam_v4l2_grab(mvcam,false);
+
+	/*
+	 * Return success even if it was an error, as there is nothing the
+	 * caller can do about it.
+	 */
+	return 0;
+}
+
+static int mvcam_set_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct mvcam *mvcam = to_mvcam(sd);
+    struct i2c_client *client = mvcam->client;
+	int ret = 0;
+	enable = !!enable;
+	
+	if (mvcam->streaming == enable) {
+        dev_info(&client->dev, "%s already streamed!\n", __func__);
+		return 0;
+	}
+VEYE_TRACE
+	if (enable) {
+
+		/*
+		 * Apply default & customized values
+		 * and then start streaming.
+		 */
+		ret = mvcam_start_streaming(mvcam);
+		if (ret)
+			goto end;
+	} else {
+		mvcam_stop_streaming(mvcam);
+	}
+	mvcam->streaming = enable;
+	return ret;
+end:
+	return ret;
+}
+
+/* Power management functions */
+static int mvcam_power_on(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct mvcam *mvcam = to_mvcam(sd);
+	int ret;
+VEYE_TRACE
+
+	ret = regulator_bulk_enable(MVCAM_NUM_SUPPLIES,
+				    mvcam->supplies);
+	if (ret) {
+		dev_err(&client->dev, "%s: failed to enable regulators\n",
+			__func__);
+		return ret;
+	}
+    gpiod_set_value_cansleep(mvcam->pwdn_gpio, 1);
+	usleep_range(STARTUP_MIN_DELAY_US,
+		     STARTUP_MIN_DELAY_US + STARTUP_DELAY_RANGE_US);
+    
+	gpiod_set_value_cansleep(mvcam->reset_gpio, 1);
+	usleep_range(STARTUP_MIN_DELAY_US,
+		     STARTUP_MIN_DELAY_US + STARTUP_DELAY_RANGE_US);
+    debug_printk("mvcam_power_on\n");
+	return 0;
+}
+
+static int mvcam_power_off(struct device *dev)
+{
+    
+	struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct mvcam *mvcam = to_mvcam(sd);
+    VEYE_TRACE
+    //do not really power off, because we might use i2c script at any time
+    gpiod_set_value_cansleep(mvcam->pwdn_gpio, 1);//still use 1
+	gpiod_set_value_cansleep(mvcam->reset_gpio, 0);
+	regulator_bulk_disable(MVCAM_NUM_SUPPLIES, mvcam->supplies);
+    debug_printk("mvcam_power_off, not really off\n");
+	return 0;
+}
+
+
+static int mvcam_enum_frame_interval(struct v4l2_subdev *sd,
+				       struct v4l2_subdev_pad_config *cfg,
+				       struct v4l2_subdev_frame_interval_enum *fie)
+{
+    VEYE_TRACE
+    /* max framerate */
+	struct v4l2_fract fract_fps;
+	struct mvcam *mvcam = to_mvcam(sd);
+	mutex_lock(&mvcam->mutex);
+    fie->width = mvcam->roi.width;
+	fie->height = mvcam->roi.height;
+    fract_fps.numerator = 100;
+    fract_fps.denominator = mvcam->max_fps*100;
+    fie->interval = fract_fps;
+	mutex_unlock(&mvcam->mutex);
+	return 0;
+}
+
+#ifdef CONFIG_VIDEO_V4L2_SUBDEV_API
+static int mvcam_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	struct mvcam *mvcam = to_mvcam(sd);
+	struct v4l2_mbus_framefmt *try_fmt =
+		v4l2_subdev_get_try_format(sd, fh->pad, 0);
+    
+//	struct v4l2_mbus_framefmt *try_fmt_meta =
+//		v4l2_subdev_get_try_format(sd, fh->pad, METADATA_PAD);
+    struct v4l2_rect *try_crop;
+    VEYE_TRACE
+    mutex_lock(&mvcam->mutex);
+	/* Initialize try_fmt */
+	try_fmt->width = mvcam->max_width;
+	try_fmt->height = mvcam->max_height;
+	try_fmt->code = mvcam->supported_formats[0].mbus_code;
+	try_fmt->field = V4L2_FIELD_NONE;
+
+	/* Initialize try_fmt for the embedded metadata pad */
+/*	try_fmt_meta->width = MVCAM_EMBEDDED_LINE_WIDTH;
+	try_fmt_meta->height = MVCAM_NUM_EMBEDDED_LINES;
+	try_fmt_meta->code = MEDIA_BUS_FMT_SENSOR_DATA;
+	try_fmt_meta->field = V4L2_FIELD_NONE;
+*/
+    /* Initialize try_crop rectangle. */
+	try_crop = v4l2_subdev_get_try_crop(sd, fh->pad, 0);
+	try_crop->top = 0;
+	try_crop->left = 0;
+	try_crop->width = mvcam->max_width;
+	try_crop->height = mvcam->max_height;
+    
+    mutex_unlock(&mvcam->mutex);
+    
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_VIDEO_V4L2_SUBDEV_API
+static const struct v4l2_subdev_internal_ops mvcam_internal_ops = {
+	.open = mvcam_open,
+};
+#endif
+
+static const struct v4l2_subdev_core_ops mvcam_core_ops = {
+    .log_status = v4l2_ctrl_subdev_log_status,
+    .subscribe_event = v4l2_ctrl_subdev_subscribe_event,
+    .unsubscribe_event = v4l2_event_subdev_unsubscribe,
+    
+    //.s_power = mvcam_s_power,
+    .ioctl = mvcam_ioctl,
+#ifdef CONFIG_COMPAT
+    .compat_ioctl32 = mvcam_compat_ioctl32,
+#endif
+};
+
+static const struct v4l2_subdev_video_ops mvcam_video_ops = {
+	.s_stream = mvcam_set_stream,
+    .g_frame_interval = mvcam_g_frame_interval,
+    //.g_frame_interval = mvcam_s_frame_interval,//todo
+};
+
+static const struct v4l2_subdev_pad_ops mvcam_pad_ops = {
+	.enum_mbus_code = mvcam_csi2_enum_mbus_code,
+	.get_fmt = mvcam_csi2_get_fmt,
+	.set_fmt = mvcam_csi2_set_fmt,
+	.enum_frame_size = mvcam_csi2_enum_framesizes,
+	.get_selection = mvcam_get_selection,
+	.set_selection = mvcam_set_selection,
+    .get_mbus_config = mvcam_g_mbus_config,
+	.enum_frame_interval = mvcam_enum_frame_interval,
+};
+
+static const struct v4l2_subdev_ops mvcam_subdev_ops = {
+	.core = &mvcam_core_ops,
+	.video = &mvcam_video_ops,
+	.pad = &mvcam_pad_ops,
+};
+
+
+
+static int __maybe_unused mvcam_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct mvcam *mvcam = to_mvcam(sd);
+VEYE_TRACE
+	if (mvcam->streaming)
+		mvcam_stop_streaming(mvcam);
+
+	return 0;
+}
+
+static int __maybe_unused mvcam_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct mvcam *mvcam = to_mvcam(sd);
+	int ret;
+
+	if (mvcam->streaming) {
+		ret = mvcam_start_streaming(mvcam);
+		if (ret)
+			goto error;
+	}
+    VEYE_TRACE
+	return 0;
+
+error:
+	mvcam_stop_streaming(mvcam);
+	mvcam->streaming = 0;
+	return ret;
 }
 
 static int mvcam_enum_controls(struct mvcam *mvcam)
@@ -1361,6 +1395,15 @@ static int mvcam_init_mode(struct v4l2_subdev *sd)
     return 0;
 }
 
+static void free_gpio(struct mvcam *mvcam)
+{
+	if (!IS_ERR(mvcam->pwdn_gpio))
+		gpio_free(desc_to_gpio(mvcam->pwdn_gpio));
+    if (!IS_ERR(mvcam->reset_gpio))
+        gpio_free(desc_to_gpio(mvcam->reset_gpio));
+    //    if (!IS_ERR(mvcam->mipi_pwr_gpio))
+	//	gpio_free(desc_to_gpio(mvcam->mipi_pwr_gpio));
+}
 static int mvcam_probe(struct i2c_client *client,
 			const struct i2c_device_id *id)
 {
@@ -1399,11 +1442,15 @@ static int mvcam_probe(struct i2c_client *client,
 	v4l2_i2c_subdev_init(&mvcam->sd, client, &mvcam_subdev_ops);
 	mvcam->client = client;
     
-    mvcam->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
+    mvcam->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(mvcam->reset_gpio)) {
 	   dev_info(dev, "Failed to get reset-gpios, maybe no use\n");
 	}
 
+	mvcam->pwdn_gpio = devm_gpiod_get(dev, "pwdn", GPIOD_OUT_HIGH);
+	if (IS_ERR(mvcam->pwdn_gpio)) {
+	  dev_info(dev, "Failed to get pwdn-gpios, maybe no use\n");
+	}
 	ret = mvcam_get_regulators(mvcam);
 	if (ret) {
 		dev_err(dev, "failed to get regulators\n");
@@ -1516,10 +1563,10 @@ error_media_entity:
 error_power_off:
 	mvcam_power_off(dev);
 	mvcam_free_controls(mvcam);
+    free_gpio(mvcam);
 err_destroy_mutex:
 	mutex_destroy(&mvcam->mutex);
 	
-
 	return ret;
 }
 
@@ -1579,4 +1626,3 @@ module_exit(sensor_mod_exit);
 MODULE_AUTHOR("xumm <www.veye.cc>");
 MODULE_DESCRIPTION("VEYE MV series mipi camera v4l2 driver");
 MODULE_LICENSE("GPL v2");
-
