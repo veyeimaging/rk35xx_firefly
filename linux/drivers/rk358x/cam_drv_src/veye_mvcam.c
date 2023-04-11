@@ -29,7 +29,7 @@
 #include <linux/pinctrl/consumer.h>
 #include <linux/of_gpio.h>
 
-#define DRIVER_VERSION			KERNEL_VERSION(0, 0x01, 0x03) 
+#define DRIVER_VERSION			KERNEL_VERSION(1, 0x01, 0x03) 
 
 
 #define mvcam_NAME			"mvcam"
@@ -38,7 +38,7 @@
 #define VEYE_MV_EMBEDDED_LINE_WIDTH 16384
 #define VEYE_MV_NUM_EMBEDDED_LINES 1
 
-#define DEBUG_PRINTK
+//#define DEBUG_PRINTK
 
 #ifndef DEBUG_PRINTK
 static int debug = 0;
@@ -88,14 +88,7 @@ struct mvcam_mode {
 static const s64 link_freq_menu_items[] = {
 	MVCAM_DEFAULT_LINK_FREQ,
 };
-/* regulator supplies */
-static const char * const mvcam_supply_name[] = {
-	"avdd",		/* Analog power */
-	"dovdd",	/* Digital I/O power */
-	"dvdd",		/* Digital core power */
-};
 
-#define MVCAM_NUM_SUPPLIES ARRAY_SIZE(mvcam_supply_name)
 
 struct mvcam {
 	struct v4l2_subdev sd;
@@ -104,8 +97,7 @@ struct mvcam {
     u32    model_id; 
 	struct gpio_desc	*reset_gpio; //ADP-MV2 do not use this
 	struct gpio_desc	*pwdn_gpio;
-    struct regulator_bulk_data supplies[MVCAM_NUM_SUPPLIES];
-    
+
     struct i2c_client *client;
     //data format 
 	struct mvcam_format *supported_formats;
@@ -264,6 +256,18 @@ static u32 bit_count(u32 n)
     return n ;
 }
 
+static int mvcam_getroi(struct mvcam *mvcam)
+{
+  //  int ret;
+    struct i2c_client *client = mvcam->client;
+    mvcam_read(client, ROI_Offset_X,&mvcam->roi.left);
+    mvcam_read(client, ROI_Offset_Y,&mvcam->roi.top);
+    mvcam_read(client, ROI_Width,&mvcam->roi.width);
+    mvcam_read(client, ROI_Height,&mvcam->roi.height);
+    v4l2_dbg(1, debug, mvcam->client, "%s:get roi(%d,%d,%d,%d)\n",
+			 __func__, mvcam->roi.left,mvcam->roi.top,mvcam->roi.width,mvcam->roi.height);
+    return 0;
+}
 
 static int mvcam_setroi(struct mvcam *mvcam)
 {
@@ -307,7 +311,6 @@ static int mvcam_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
 	case V4L2_CID_VEYE_MV_TRIGGER_SRC:
         ret = mvcam_read(client, Trigger_Source,&ctrl->val);
 		break;
-
 	case V4L2_CID_VEYE_MV_FRAME_RATE:
         ret = mvcam_read(client, Framerate,&ctrl->val);
         ctrl->val = ctrl->val/100;
@@ -338,19 +341,6 @@ static int mvcam_s_ctrl(struct v4l2_ctrl *ctrl)
 			 __func__, ctrl->id, ctrl->val);
 	
     switch (ctrl->id) {
-	
-	case V4L2_CID_HFLIP:
-        mvcam->h_flip = ctrl->val;
-        ret = mvcam_write(client, Image_Direction,
-				       mvcam->h_flip |
-				       mvcam->v_flip << 1);
-        break;
-	case V4L2_CID_VFLIP:
-        mvcam->v_flip = ctrl->val;
-		ret = mvcam_write(client, Image_Direction,
-				       mvcam->h_flip |
-				       mvcam->v_flip << 1);
-		break;
 	case V4L2_CID_VEYE_MV_TRIGGER_MODE:
         ret = mvcam_write(client, Trigger_Mode,ctrl->val);
 		break;
@@ -383,10 +373,8 @@ static int mvcam_s_ctrl(struct v4l2_ctrl *ctrl)
 		ret = -EINVAL;
 		break;
 	}
-
 	return ret;
 }
-
 
 static const struct v4l2_ctrl_ops mvcam_ctrl_ops = {
     .g_volatile_ctrl = mvcam_g_volatile_ctrl,
@@ -398,8 +386,8 @@ static struct v4l2_ctrl_config mvcam_v4l2_ctrls[] = {
     {
 		.ops = NULL,
 		.id = V4L2_CID_LINK_FREQ,
-		.name = NULL,//kernel fill fill it
-		.type = V4L2_CTRL_TYPE_MENU ,//should be menu		
+		.name = NULL,//kernel will fill it
+		.type = V4L2_CTRL_TYPE_MENU ,
         .def = 0,
 		.min = 0,
         .max = ARRAY_SIZE(link_freq_menu_items) - 1,
@@ -410,33 +398,13 @@ static struct v4l2_ctrl_config mvcam_v4l2_ctrls[] = {
 	{
 		.ops = &mvcam_ctrl_ops,
 		.id = V4L2_CID_PIXEL_RATE,
-		.name = NULL,//kernel fill fill it
+		.name = NULL,//kernel will fill it
 		.type = V4L2_CTRL_TYPE_INTEGER,
 		.def = MV_CAM_PIXEL_RATE,
 		.min = MV_CAM_PIXEL_RATE,
 		.max = MV_CAM_PIXEL_RATE,
 		.step = 1,
 		.flags = V4L2_CTRL_FLAG_READ_ONLY,
-	},
-	{
-		.ops = &mvcam_ctrl_ops,
-		.id = V4L2_CID_HFLIP,
-		.name = NULL,
-		.type = V4L2_CTRL_TYPE_BOOLEAN,
-		.min = 0,
-		.max = 1,
-		.step = 1,
-		.def = 0,
-	},
-	{
-		.ops = &mvcam_ctrl_ops,
-		.id = V4L2_CID_VFLIP,
-		.name = NULL,
-		.type = V4L2_CTRL_TYPE_BOOLEAN,
-		.min = 0,
-		.max = 1,
-		.step = 1,
-		.def = 0,
 	},
 	//custom v4l2-ctrls
 	{
@@ -506,14 +474,12 @@ static struct v4l2_ctrl_config mvcam_v4l2_ctrls[] = {
 	},
 };
 //grab some ctrls while streaming
-static void mvcam_v4l2_grab(struct mvcam *mvcam,bool grabbed)
+static void mvcam_v4l2_ctrl_grab(struct mvcam *mvcam,bool grabbed)
 {
     int i = 0;
     for (i = 0; i < ARRAY_SIZE(mvcam_v4l2_ctrls); ++i) {
 		switch(mvcam->ctrls[i]->id)
         {
-            case V4L2_CID_HFLIP:
-            case V4L2_CID_VFLIP:
             case V4L2_CID_VEYE_MV_TRIGGER_MODE:
             case V4L2_CID_VEYE_MV_TRIGGER_SRC:
             case V4L2_CID_VEYE_MV_FRAME_RATE:
@@ -527,6 +493,49 @@ static void mvcam_v4l2_grab(struct mvcam *mvcam,bool grabbed)
         }
 	}
 }
+
+static void mvcam_v4l2_ctrl_init(struct mvcam *mvcam)
+{
+    int i = 0;
+    u32 value = 0;
+    struct i2c_client *client = mvcam->client;
+    for (i = 0; i < ARRAY_SIZE(mvcam_v4l2_ctrls); ++i) {
+		switch(mvcam_v4l2_ctrls[i].id)
+        {
+            case V4L2_CID_VEYE_MV_TRIGGER_MODE:
+                mvcam_read(client, Trigger_Mode,&value);
+                mvcam_v4l2_ctrls[i].def = value;
+                v4l2_dbg(1, debug, mvcam->client, "%s:default trigger mode %d\n", __func__, value);
+            break;
+            case V4L2_CID_VEYE_MV_TRIGGER_SRC:
+                mvcam_read(client, Trigger_Source,&value);
+                mvcam_v4l2_ctrls[i].def = value;
+                v4l2_dbg(1, debug, mvcam->client, "%s:default trigger source %d\n", __func__, value);
+            break;
+            case V4L2_CID_VEYE_MV_FRAME_RATE:
+                mvcam_read(client, Framerate,&value);
+                mvcam_v4l2_ctrls[i].def = value/100;
+                mvcam_read(client, MaxFrame_Rate,&value);
+                mvcam_v4l2_ctrls[i].max = value/100;
+                v4l2_dbg(1, debug, mvcam->client, "%s:default framerate %lld , max fps %lld \n", __func__, \
+                    mvcam_v4l2_ctrls[i].def,mvcam_v4l2_ctrls[i].max);
+            break;
+            case V4L2_CID_VEYE_MV_ROI_X:
+                //mvcam_read(client, ROI_Offset_X,value);
+                //mvcam_v4l2_ctrls[i].def = value;
+                mvcam_v4l2_ctrls[i].max = mvcam->max_width - mvcam->min_width;
+            break;
+            case V4L2_CID_VEYE_MV_ROI_Y:
+                //mvcam_read(client, ROI_Offset_Y,value);
+                //mvcam_v4l2_ctrls[i].def = value;
+                mvcam_v4l2_ctrls[i].max = mvcam->max_height - mvcam->min_height;
+            break;
+            default:
+            break;
+        }
+	}
+}
+
 static int mvcam_g_mbus_config(struct v4l2_subdev *sd, unsigned int pad_id,
 				struct v4l2_mbus_config *config)
 {
@@ -595,6 +604,27 @@ static int mvcam_g_frame_interval(struct v4l2_subdev *sd,
 	return 0;
 }
 
+static int mvcam_s_frame_interval(struct v4l2_subdev *sd,
+				    struct v4l2_subdev_frame_interval *fi)
+{
+    
+	struct mvcam *mvcam = to_mvcam(sd);
+    VEYE_TRACE
+    if(fi->interval.numerator == 0)
+        return -EINVAL;
+    
+    v4l2_dbg(1, debug, sd, "%s: numerator %d, denominator %d\n",
+    			__func__, fi->interval.numerator,fi->interval.denominator);
+
+	mutex_lock(&mvcam->mutex);
+    mvcam->cur_fps = fi->interval.denominator/fi->interval.numerator;
+    mvcam_write(mvcam->client, Framerate,mvcam->cur_fps*100);
+	mutex_unlock(&mvcam->mutex);
+
+	return 0;
+}
+
+
 static int mvcam_csi2_get_fmt(struct v4l2_subdev *sd,
 								struct v4l2_subdev_pad_config *cfg,
 								struct v4l2_subdev_format *format)
@@ -646,7 +676,7 @@ static int mvcam_csi2_get_fmt_idx_by_code(struct mvcam *mvcam,
 	}
 	return -EINVAL;
 }
-
+/*
 static int mvcam_get_selection(struct v4l2_subdev *sd,
 				struct v4l2_subdev_pad_config *cfg,
 				struct v4l2_subdev_selection *sel)
@@ -676,7 +706,7 @@ VEYE_TRACE
     sel->flags = V4L2_SEL_FLAG_LE;
     v4l2_dbg(1, debug, sd, "%s: target %d\n", __func__,V4L2_SEL_TGT_CROP);
     return 0;
-}
+}*/
 static int mvcam_set_selection(struct v4l2_subdev *sd,
 		struct v4l2_subdev_pad_config *cfg,
 		struct v4l2_subdev_selection *sel)
@@ -691,7 +721,6 @@ static int mvcam_set_selection(struct v4l2_subdev *sd,
             mvcam->roi.width = clamp(rounddown(sel->r.width, MV_CAM_ROI_W_ALIGN), mvcam->min_width, mvcam->max_width);
             mvcam->roi.height = clamp(rounddown(sel->r.height, MV_CAM_ROI_H_ALIGN), mvcam->min_height, mvcam->max_height);
             mvcam_setroi(mvcam);
-    
             break;
         default:
             return -EINVAL;
@@ -743,14 +772,14 @@ static int mvcam_csi2_set_fmt(struct v4l2_subdev *sd,
     //struct v4l2_mbus_framefmt *framefmt;
     struct v4l2_subdev_selection sel;
     
-/*    if ((format->format.width != mvcam->roi.width ||
+    /*if ((format->format.width != mvcam->roi.width ||
      format->format.height != mvcam->roi.height))
     {
         v4l2_info(sd, "Changing the resolution is not supported with VIDIOC_S_FMT! \n Pls use VIDIOC_S_SELECTION.\n");
         v4l2_info(sd,"%d,%d,%d,%d\n",format->format.width,mvcam->roi.width,format->format.height,mvcam->roi.height);
         return -EINVAL;
-    }
-*/
+    }*/
+
 VEYE_TRACE
     //format->format.colorspace =  V4L2_COLORSPACE_SRGB;
     format->format.field = V4L2_FIELD_NONE;
@@ -1005,7 +1034,7 @@ static int mvcam_start_streaming(struct mvcam *mvcam)
 		return ret;
 
 	/* some v4l2 ctrls cannot change during streaming */
-    mvcam_v4l2_grab(mvcam,true);
+    mvcam_v4l2_ctrl_grab(mvcam,true);
 	return ret;
 }
 
@@ -1021,7 +1050,7 @@ VEYE_TRACE
 		dev_err(&client->dev, "%s failed to set stream\n", __func__);
     debug_printk("mvcam_stop_streaming \n");
     
-   	 mvcam_v4l2_grab(mvcam,false);
+   	 mvcam_v4l2_ctrl_grab(mvcam,false);
 
 	/*
 	 * Return success even if it was an error, as there is nothing the
@@ -1066,16 +1095,8 @@ static int mvcam_power_on(struct device *dev)
 	struct i2c_client *client = to_i2c_client(dev);
 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
 	struct mvcam *mvcam = to_mvcam(sd);
-	int ret;
 VEYE_TRACE
 
-	ret = regulator_bulk_enable(MVCAM_NUM_SUPPLIES,
-				    mvcam->supplies);
-	if (ret) {
-		dev_err(&client->dev, "%s: failed to enable regulators\n",
-			__func__);
-		return ret;
-	}
     gpiod_set_value_cansleep(mvcam->pwdn_gpio, 1);
 	usleep_range(STARTUP_MIN_DELAY_US,
 		     STARTUP_MIN_DELAY_US + STARTUP_DELAY_RANGE_US);
@@ -1097,7 +1118,7 @@ static int mvcam_power_off(struct device *dev)
     //do not really power off, because we might use i2c script at any time
     gpiod_set_value_cansleep(mvcam->pwdn_gpio, 1);//still use 1
 	gpiod_set_value_cansleep(mvcam->reset_gpio, 0);
-	regulator_bulk_disable(MVCAM_NUM_SUPPLIES, mvcam->supplies);
+
     debug_printk("mvcam_power_off, not really off\n");
 	return 0;
 }
@@ -1179,7 +1200,7 @@ static const struct v4l2_subdev_core_ops mvcam_core_ops = {
 static const struct v4l2_subdev_video_ops mvcam_video_ops = {
 	.s_stream = mvcam_set_stream,
     .g_frame_interval = mvcam_g_frame_interval,
-    //.g_frame_interval = mvcam_s_frame_interval,//todo
+    .s_frame_interval = mvcam_s_frame_interval, 
 };
 
 static const struct v4l2_subdev_pad_ops mvcam_pad_ops = {
@@ -1187,8 +1208,9 @@ static const struct v4l2_subdev_pad_ops mvcam_pad_ops = {
 	.get_fmt = mvcam_csi2_get_fmt,
 	.set_fmt = mvcam_csi2_set_fmt,
 	.enum_frame_size = mvcam_csi2_enum_framesizes,
-	.get_selection = mvcam_get_selection,
-	.set_selection = mvcam_set_selection,
+    
+	//.get_selection = mvcam_get_selection,
+	//.set_selection = mvcam_set_selection,
     .get_mbus_config = mvcam_g_mbus_config,
 	.enum_frame_interval = mvcam_enum_frame_interval,
 };
@@ -1251,11 +1273,6 @@ VEYE_TRACE
     ctrl_hdlr->lock = &mvcam->mutex;
     
     for (i = 0; i < ARRAY_SIZE(mvcam_v4l2_ctrls); ++i) {
-        //update roi max value
-        if(mvcam_v4l2_ctrls[i].id == V4L2_CID_VEYE_MV_ROI_X)
-            mvcam_v4l2_ctrls[i].max = mvcam->max_width - mvcam->min_width;
-        else if(mvcam_v4l2_ctrls[i].id == V4L2_CID_VEYE_MV_ROI_Y)
-            mvcam_v4l2_ctrls[i].max = mvcam->max_height - mvcam->min_height;
 		ctrl = v4l2_ctrl_new_custom(
 			ctrl_hdlr,
 			&mvcam_v4l2_ctrls[i],
@@ -1268,7 +1285,7 @@ VEYE_TRACE
         if(mvcam->ctrls[i]->id == V4L2_CID_VEYE_MV_FRAME_RATE){
             mvcam->frmrate = mvcam->ctrls[i];
         }
-        dev_info(&client->dev, "init control %s success\n",mvcam_v4l2_ctrls[i].name);
+        dev_dbg(&client->dev, "init control %s success\n",mvcam_v4l2_ctrls[i].name);
 	}
     
 	if (ctrl_hdlr->error) {
@@ -1300,21 +1317,6 @@ error:
 	return ret;
 
 }
-
-
-static int mvcam_get_regulators(struct mvcam *mvcam)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&mvcam->sd);
-	unsigned int i;
-
-	for (i = 0; i < MVCAM_NUM_SUPPLIES; i++)
-		mvcam->supplies[i].supply = mvcam_supply_name[i];
-
-	return devm_regulator_bulk_get(&client->dev,
-				       MVCAM_NUM_SUPPLIES,
-				       mvcam->supplies);
-}
-
 
 /* Verify chip ID */
 static int mvcam_identify_module(struct mvcam * mvcam)
@@ -1370,10 +1372,10 @@ static int mvcam_identify_module(struct mvcam * mvcam)
         dev_err(&client->dev, "read firmware version failed\n");
     }
     dev_info(&client->dev, "firmware version: 0x%04X\n", firmware_version);
-    dev_info(&client->dev, "return 0\n");
 	return 0;
 }
 
+/*
 static int mvcam_init_mode(struct v4l2_subdev *sd)
 {
     struct mvcam *mvcam = to_mvcam(sd);
@@ -1383,8 +1385,10 @@ static int mvcam_init_mode(struct v4l2_subdev *sd)
     //stop acquitsition
     mvcam_write(client, Image_Acquisition,0);
     //set to video stream mode
-	mvcam_write(client, Trigger_Mode,0);
+	//mvcam_write(client, Trigger_Mode,0);
     //set roi
+	//todo : read current roi from camera and set to media node.
+	//because RK3588's VICAP open the crop capbility by default, it will intercept the roi setting.
     mvcam->roi.left = 0;
     mvcam->roi.top = 0;
     mvcam->roi.width = mvcam->max_width;
@@ -1394,7 +1398,7 @@ static int mvcam_init_mode(struct v4l2_subdev *sd)
     mvcam_set_selection(sd, NULL, &sel);
     return 0;
 }
-
+*/
 static void free_gpio(struct mvcam *mvcam)
 {
 	if (!IS_ERR(mvcam->pwdn_gpio))
@@ -1451,11 +1455,6 @@ static int mvcam_probe(struct i2c_client *client,
 	if (IS_ERR(mvcam->pwdn_gpio)) {
 	  dev_info(dev, "Failed to get pwdn-gpios, maybe no use\n");
 	}
-	ret = mvcam_get_regulators(mvcam);
-	if (ret) {
-		dev_err(dev, "failed to get regulators\n");
-		return ret;
-	}
 
 	endpoint_node = of_find_node_by_name(node,"endpoint");
 	if(endpoint_node != NULL){
@@ -1482,6 +1481,7 @@ static int mvcam_probe(struct i2c_client *client,
 	if (ret){
         goto error_power_off;
     }
+
 	if (mvcam_enum_pixformat(mvcam)) {
 		dev_err(dev, "enum pixformat failed.\n");
 		ret = -ENODEV;
@@ -1514,14 +1514,21 @@ static int mvcam_probe(struct i2c_client *client,
     }
     v4l2_dbg(1, debug, mvcam->client, "%s: max width %d; max height %d\n",
 					__func__, mvcam->max_width,mvcam->max_height);
+    //read roi
+    mvcam_getroi(mvcam);
+    
+    mvcam_v4l2_ctrl_init(mvcam);
+    
 	if (mvcam_enum_controls(mvcam)) {
 		dev_err(dev, "enum controls failed.\n");
 		ret = -ENODEV;
 		goto error_power_off;
 	}
 	
-    mvcam_init_mode(&mvcam->sd);
-
+    //mvcam_init_mode(&mvcam->sd);
+    //stop acquitsition
+    mvcam_write(client, Image_Acquisition,0);
+    
     
 #ifdef CONFIG_VIDEO_V4L2_SUBDEV_API
 	mvcam->sd.internal_ops = &mvcam_internal_ops;
