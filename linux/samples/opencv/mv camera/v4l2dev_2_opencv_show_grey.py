@@ -18,7 +18,7 @@ def main():
     if not cap.isOpened():
         print("Failed to open video device")
         return
-
+    print("This demo not finished yet!")
     # Set the image size
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, args.width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, args.height)
