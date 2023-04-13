@@ -15,7 +15,7 @@ VEYE series and CS series cameras are provided with Raspberry Pi compatible 15Pi
 ### Connection of camera and ADP-Tfirefly
 The two are connected using 1.0 mm pitch*15P FFC cable with opposite direction. The cable must be inserted with the silver contacts facing outside.
 
-![Firefly Board and VEYE camera overall](resources/Firefly%20Board%20and%20VEYE%20camera%20overall.jpg)
+![VEYE camera connect to ADP-Tfirefly](resources/VEYE%20camera%20connect%20to%20ADP-Tfirefly.jpg)
 
 ### Connection of ADP-Tfirefly and Firefly Board
 The two are connected using 0.5 mm pitch*30P FFC cable with same direction. The cable must be inserted with the silver contacts facing inside.
