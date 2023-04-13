@@ -195,7 +195,7 @@ https://github.com/veyeimaging/rk35xx_firefly/tree/main/android/rk358x/drivers
 
 ## Known issues
 
-1. For RK3588, the current version of the system prompts an error when getting UYVY data format: rkcif-mipi-lvds2: ERROR: csi size err, intstat:0x1000000, lastline:1!!!
+1. The VICAP module of RK3588 does not support outputting the UYVY format, so please use the NV12 format instead.
 
 ## References
 - ROC-RK3566-PC Manual
