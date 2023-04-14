@@ -323,7 +323,11 @@ After setting data format, resolution, frame rate，run:
 ```
 ./yavta -c1 -Fy8-${WIDTH}x${HEIGHT}.raw --skip 0 -f Y8 -s ${WIDTH}x${HEIGHT} /dev/video0
 ```
-
+#### Example of import image to OpenCV
+See the [samples](https://github.com/veyeimaging/rk356x_firefly/tree/main/linux/samples) directory on github for details.
+```
+./v4l2dev_2_opencv_show_grey.py --width 1456 --height 1088 --fps 60
+```
 #### Example of gstreamer application
 To facilitate installation and debugging, the MV series cameras provide UYVY mode, which supports a maximum width of 2880 and can be previewed in real time using the following command.
 
