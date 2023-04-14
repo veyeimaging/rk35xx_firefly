@@ -8,6 +8,7 @@ Refer to this [link](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/linux_compile_
 ### Patch the code
 1. Put the camera driver files into the kernel/drivers/media/i2c directory, and modify the Kconfig and Makefile files to add driver options.
 2. Put the dts file into the kernel\arch\arm64\boot\dts\rockchip directory.
+  Note that for different SDK versions, the first few lines of different DTSI files need to be modified to select the camera driver to be enabled - either the VEYE series or the MV series.
 3. For RK3588, Modify the . /arch/arm64/configs/firefly-linux.config file to add VEYE camera option.
 ### Compile firmware to support VEYE camera version
 
