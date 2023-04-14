@@ -329,7 +329,7 @@ To facilitate installation and debugging, the MV series cameras provide UYVY mod
 
 Note that the RAW series does not support the UYVY format.
 
-We provide several gstreamer routines that implement the preview function. See the [examples](https://github.com/veyeimaging/rk356x_firefly/tree/main/linux/examples) directory on github for details.
+We provide several gstreamer routines that implement the preview function. See the [samples](https://github.com/veyeimaging/rk356x_firefly/tree/main/linux/samples) directory on github for details.
 
 ### Trigger mode
 #### Set data format, resolution, frame rate
