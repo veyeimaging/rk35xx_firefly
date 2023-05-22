@@ -1221,8 +1221,6 @@ static const struct v4l2_subdev_ops mvcam_subdev_ops = {
 	.pad = &mvcam_pad_ops,
 };
 
-
-
 static int __maybe_unused mvcam_suspend(struct device *dev)
 {
 	struct i2c_client *client = to_i2c_client(dev);
@@ -1424,8 +1422,7 @@ static int mvcam_probe(struct i2c_client *client,
 		DRIVER_VERSION >> 16,
 		(DRIVER_VERSION & 0xff00) >> 8,
 		DRIVER_VERSION & 0x00ff);    
-	
-	mvcam = devm_kzalloc(&client->dev, sizeof(*mvcam), GFP_KERNEL);
+	mvcam = devm_kzalloc(&client->dev, sizeof(struct mvcam), GFP_KERNEL);
 	if (!mvcam)
 		return -ENOMEM;
     

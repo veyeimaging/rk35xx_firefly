@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2022 www.veye.cc
+ *
+ */
+ 
+
+&i2c7{
+        single_fpdlink0: ds90ub954@30 {
+        compatible = "ti,ds90ub954";
+        priority = <(-1)>;
+        reg = <0x30>;
+        status = "okay";
+        csi-lane-count = <2>;
+        csi-lane-speed = <800>;
+        //continuous-clock;
+        //pdb-gpio = <&gpio TEGRA_GPIO(S, 7) 0>;
+        //pass-gpio = <&gpio TEGRA_GPIO(S, 0) 0>;
+        //lock-gpio = <&gpio TEGRA_GPIO(T, 0) 0>;
+        i2c_address_single0: num-alias-pairs0 {list-cells = <1>;};
+        serializers {
+            status = "okay";
+            num-channels = <1>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+            serializer@0 {
+                status = "okay";
+                rx-channel=<0>;
+                i2c-address=<0x19>;
+                csi-lane-count = <2>;
+                i2c-slave = <&i2c_address_single0 0x3b>;
+                slave-alias = <&i2c_address_single0 0x3b>;
+            };
+        };
+    };
+};
+
