@@ -13,6 +13,7 @@ We provide drivers for both Linux(Ubuntu) and Android.
 | VEYE Series  | VEYE-MIPI-IMX327S  | Done  |
 | VEYE Series  | VEYE-MIPI-IMX462  | Done  |
 | VEYE Series  | VEYE-MIPI-IMX385  | Done  |
+In addition, the driver for the Fpdlink connection mode has been finished on the Ubuntu system.
 ## Hardware Setup
 VEYE series and CS series cameras are provided with Raspberry Pi compatible 15Pin FFC connector. An [ADP-Tfirefly adapter board](resources/ADP-Tfirefly-V1.0.pdf) is required to adapt to the ROC-RK3566-PC board.
 ### Connection of camera and ADP-Tfirefly
@@ -27,6 +28,10 @@ The two are connected using 0.5 mm pitch*30P FFC cable with same direction. The 
 
 ### Overall connection
 ![Firefly Board and VEYE camera overall](resources/Firefly%20Board%20and%20VEYE%20camera%20overall.jpg)
+
+### FPD-Link III Camera Connection Diagram
+![Fpd-link camera to ROC-RK3588S-PC](resources/Fpdlink-III_to_RK3588S.png)
+
 ## Introduction to github repositories
 includes：
 - driver source code
@@ -209,6 +214,8 @@ https://github.com/veyeimaging/rk35xx_firefly/tree/main/android/rk358x/drivers
 [https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html](https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html)
 
 ## Document History
+- 2023-05-22
+Support Fpdlink-III on ubuntu system.
 - 2022-12-28
 Add support for RK358x.
 - 2022-12-06
