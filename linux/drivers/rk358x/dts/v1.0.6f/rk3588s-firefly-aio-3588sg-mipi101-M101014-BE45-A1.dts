@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2022 T-chip Electronics Co., Ltd.
+ *
+ */
+
+/dts-v1/;
+
+#include "rk3588s-firefly-aio-3588sg.dtsi"
+//#include "rk3588s-firefly-aio-3588sg-cam-8ms1m.dtsi"
+#include "rk3588s-firefly-aio-3588sg-cam-veyemvcam.dtsi"
+#include "rk3588s-firefly-aio-3588sg-mipi101-M101014-BE45-A1.dtsi"
+#include "rk3588s-firefly-aio-3588sg-edp-NV156FHM-T06.dtsi"
+
+/ {
+	model = "Firefly AIO-3588SG MIPI(Linux)";
+	compatible = "rockchip,rk3588s-firefly-aio-3588sg", "rockchip,rk3588";
+};
