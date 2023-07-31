@@ -23,6 +23,8 @@ We provide drivers for the Linux operating system (using Ubuntu as an example).
 | MV Series  | MV-MIPI-IMX264M  | Done  |
 | RAW Series  | RAW-MIPI-SC132M	  | Done  |
 
+In addition, the driver for the V-by-One HS connection mode has been finished on the Ubuntu system.
+
 ## Hardware Setup
 
 The MV series and RAW series cameras require an ADP-MV2 adapter board to connect to the ROC-RK35xx-PC motherboard.
@@ -38,6 +40,9 @@ The two are connected using 1.0 mm pitch*15P FFC cable with opposite direction. 
 ### Connection with Main board using ADP-MV2
 
 ![RK to ADP-MV2 and MV cam](resources/RK-ADP-MV2-MV-MIPI_01.jpg)
+
+### V-by-One-HS-KIT Camera Connection Diagram
+![VBYONE connection with rk3588](resources/VBYONE-connection-with-rk3588.jpg)
 
 ## Introduction to github repositories
 
@@ -391,5 +396,8 @@ https://wiki.t-firefly.com/en/ROC-RK3588S-PC/
 https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html
 
 ## Document History
+- 2023-07-31
+Support V-by-One on ubuntu system.
+
 - 2023-04-12
 Release 1st version.
