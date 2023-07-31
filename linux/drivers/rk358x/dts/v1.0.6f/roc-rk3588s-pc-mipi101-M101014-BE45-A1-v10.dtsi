@@ -10,10 +10,13 @@
 //#include "rk3588-roc-pc-cam-8ms1m.dtsi"
 
 //open this line to enable fpdlink-III link
-#include "rk3588-roc-pc-fpdlink-90ub954.dtsi"
+//#include "rk3588-roc-pc-fpdlink-90ub954.dtsi"
 
-#include "rk3588-roc-pc-cam-veyecam2m.dtsi"
-//#include "rk3588-roc-pc-cam-veyemvcam.dtsi"
+//open this line to enable v-by-one hs link
+#include "rk3588-roc-pc-vbyone-overlay.dtsi"
+
+//#include "rk3588-roc-pc-cam-veyecam2m.dtsi"
+#include "rk3588-roc-pc-cam-veyemvcam.dtsi"
 
 #include "roc-rk3588s-pc-v10-diff.dtsi"
 #define WHICHDSI 0 /* dsi0 = 0,dsi1 = 1*/
