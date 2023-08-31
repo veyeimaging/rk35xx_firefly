@@ -17,9 +17,9 @@ static char i2c_device_name[I2C_DEVICE_NAME_LEN];
 
 #define MAX_BLK_BUFF_SIZE (4096)
 
-#define LUT_COUNT_ADDR (0xC70)
-#define LUT_W_START_ADDR (0xC74)
-#define LUT_W_DONE_ADDR (0xC78)
+#define LUT_COUNT_ADDR (0xC74)
+#define LUT_W_START_ADDR (0xC78)
+#define LUT_W_DONE_ADDR (0xC7C)
 #define LUT_DATA_ADDR (0x1800)
 
 static int i2c_rd(int fd, uint8_t i2c_addr, uint16_t reg, uint32_t *values, uint32_t n)
@@ -105,7 +105,7 @@ U32 main(int argc, char *argv[])
     struct sensor_regs regs;
 	if (argc < 4)
 	{
-		printf("usage: %s <bus_num> <device address(8bit)> <r/w> <filename>. sample: %s 0x10 0x3b 0x1800 r lutfile.txt\n", argv[0], argv[0]);
+		printf("usage: %s <bus_num> <device address(8bit)> <r/w> <filename>. sample: %s 0x10 0x3b r lutfile.txt\n", argv[0], argv[0]);
 		return -1;
 	}
 

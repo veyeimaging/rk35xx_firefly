@@ -28,8 +28,11 @@
 #include <media/v4l2-subdev.h>
 #include <linux/pinctrl/consumer.h>
 #include <linux/of_gpio.h>
-
-#define DRIVER_VERSION			KERNEL_VERSION(1, 0x01, 0x03) 
+/*
+versionlog: v.1.1.04 -20230830
+add support for RAW_MIPI_IMX462M and RAW_MIPI_AR0234M
+*/
+#define DRIVER_VERSION			KERNEL_VERSION(1, 0x01, 0x04) 
 
 
 #define mvcam_NAME			"mvcam"
@@ -85,7 +88,7 @@ struct mvcam_mode {
 	u32 height;
 };
 
-static const s64 link_freq_menu_items[] = {
+static s64 link_freq_menu_items[] = {
 	MVCAM_DEFAULT_LINK_FREQ,
 };
 
@@ -113,6 +116,8 @@ struct mvcam {
     u32 cur_fps;
     u32 h_flip;
     u32 v_flip;
+    u32 lane_num;
+    u32 mipi_datarate;
     
 	struct v4l2_ctrl_handler ctrl_handler;
     struct v4l2_ctrl *ctrls[MVCAM_MAX_CTRLS];
@@ -132,7 +137,7 @@ struct mvcam {
 	const char		*module_facing;
 	const char		*module_name;
 	const char		*len_name;
-	u32 lane_data_num;
+
 };
 
 
@@ -541,7 +546,7 @@ static int mvcam_g_mbus_config(struct v4l2_subdev *sd, unsigned int pad_id,
 {
 	u32 val = 0;
     struct mvcam *mvcam = to_mvcam(sd);
-	val = 1 << (mvcam->lane_data_num - 1) |
+	val = 1 << (mvcam->lane_num - 1) |
 	      V4L2_MBUS_CSI2_CHANNEL_0 |
 	      V4L2_MBUS_CSI2_CONTINUOUS_CLOCK;
 	config->type = V4L2_MBUS_CSI2_DPHY;
@@ -1019,6 +1024,31 @@ err:
 	return -ENODEV;
 }
 
+static void mvcam_get_mipifeature(struct mvcam *mvcam)
+{
+    u32 lane_num;
+    u32 mipi_datarate;
+    struct i2c_client *client = mvcam->client;
+    mvcam_read(client, Lane_Num, &lane_num);
+    if(lane_num == 4){
+        mvcam->lane_num = 4;
+    }else{
+        mvcam->lane_num = 2;
+    }
+    
+    mvcam_read(client, MIPI_DataRate, &mipi_datarate);
+    if(mipi_datarate == 0xFFFFFFFF)
+        mipi_datarate = MVCAM_DEFAULT_MIPI_DATARATE;
+    else
+        mipi_datarate *=1000;//register value is kbps
+    
+    mvcam->mipi_datarate = mipi_datarate;
+    
+    link_freq_menu_items[0] = mvcam->mipi_datarate>>1;//hz is half of datarate
+    dev_info(&client->dev, "%s: lane num %d, datarate %d bps\n",
+					__func__, mvcam->lane_num,mvcam->mipi_datarate);
+    return;
+}
 /* Start streaming */
 static int mvcam_start_streaming(struct mvcam *mvcam)
 {
@@ -1360,6 +1390,14 @@ static int mvcam_identify_module(struct mvcam * mvcam)
             mvcam->model_id = device_id;
             dev_info(&client->dev, "camera is: MV_MIPI_IMX287M\n");
             break;
+        case RAW_MIPI_IMX462M:
+            mvcam->model_id = device_id;
+            dev_info(&client->dev, "camera is: RAW_MIPI_IMX462M\n");
+            break;
+        case RAW_MIPI_AR0234M:
+            mvcam->model_id = device_id;
+            dev_info(&client->dev, "camera is: RAW_MIPI_AR0234M\n");
+            break;
         default:
             dev_err(&client->dev, "camera id do not support: %x \n",device_id);
 		return -EIO;
@@ -1406,26 +1444,18 @@ static void free_gpio(struct mvcam *mvcam)
     //    if (!IS_ERR(mvcam->mipi_pwr_gpio))
 	//	gpio_free(desc_to_gpio(mvcam->mipi_pwr_gpio));
 }
-static int mvcam_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
+
+static int mvcam_check_hwcfg(struct device *dev)
 {
-	struct device *dev = &client->dev;
-	
+    int ret;
+    struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct mvcam *mvcam = to_mvcam(sd);
+    
 	struct device_node *node = dev->of_node;
 	struct device_node *endpoint_node = NULL;
 	struct v4l2_fwnode_endpoint vep = {0};
-	struct mvcam *mvcam;
-	char facing[2];
-	int ret;
-    
-	dev_info(dev, "veye mv series camera driver version: %02x.%02x.%02x\n",
-		DRIVER_VERSION >> 16,
-		(DRIVER_VERSION & 0xff00) >> 8,
-		DRIVER_VERSION & 0x00ff);    
-	mvcam = devm_kzalloc(&client->dev, sizeof(struct mvcam), GFP_KERNEL);
-	if (!mvcam)
-		return -ENOMEM;
-    
+
     ret = of_property_read_u32(node, RKMODULE_CAMERA_MODULE_INDEX,
 				   &mvcam->module_index);
 	ret |= of_property_read_string(node, RKMODULE_CAMERA_MODULE_FACING,
@@ -1439,11 +1469,50 @@ static int mvcam_probe(struct i2c_client *client,
 		return -EINVAL;
 	}
     
+	endpoint_node = of_find_node_by_name(node,"endpoint");
+	if(endpoint_node != NULL){
+		//printk("mvcam get endpoint node success\n");
+		ret=v4l2_fwnode_endpoint_parse(&endpoint_node->fwnode, &vep);
+		if(ret){
+			dev_info(dev, "Failed to get mvcam endpoint data lanes, set use lane num from camera %d\n",mvcam->lane_num);
+		}else{
+			dev_info(dev, "Success to get mvcam endpoint data lanes, dts uses %d lanes\n", vep.bus.mipi_csi2.num_data_lanes);
+			/* Check the number of MIPI CSI2 data lanes */
+			if (vep.bus.mipi_csi2.num_data_lanes != mvcam->lane_num) {
+				dev_err(dev, "dts lane num %d mismatch camera data lane num %d\n",vep.bus.mipi_csi2.num_data_lanes,mvcam->lane_num);
+				return -ENOENT;
+			}
+		}
+		
+	}else{
+		dev_info(dev,"mvcam get endpoint node failed\n");
+		return -ENOENT;
+	}
+	return 0;
+}
+static int mvcam_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
+	
+
+	struct mvcam *mvcam;
+	char facing[2];
+	int ret;
+    
+	dev_info(dev, "veye mv series camera driver version: %02x.%02x.%02x\n",
+		DRIVER_VERSION >> 16,
+		(DRIVER_VERSION & 0xff00) >> 8,
+		DRIVER_VERSION & 0x00ff);    
+	mvcam = devm_kzalloc(&client->dev, sizeof(struct mvcam), GFP_KERNEL);
+	if (!mvcam)
+		return -ENOMEM;
+
 	/* Initialize subdev */
 	v4l2_i2c_subdev_init(&mvcam->sd, client, &mvcam_subdev_ops);
 	mvcam->client = client;
-    
-    mvcam->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
+
+	mvcam->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(mvcam->reset_gpio)) {
 	   dev_info(dev, "Failed to get reset-gpios, maybe no use\n");
 	}
@@ -1453,21 +1522,6 @@ static int mvcam_probe(struct i2c_client *client,
 	  dev_info(dev, "Failed to get pwdn-gpios, maybe no use\n");
 	}
 
-	endpoint_node = of_find_node_by_name(node,"endpoint");
-	if(endpoint_node != NULL){
-		//printk("mvcam get endpoint node success\n");
-		ret=v4l2_fwnode_endpoint_parse(&endpoint_node->fwnode, &vep);
-		if(ret){
-			dev_info(dev, "Failed to get mvcam endpoint data lanes, set a default value\n");
-			mvcam->lane_data_num = 2;
-		}else{
-			dev_info(dev, "Success to get mvcam endpoint data lanes, dts uses %d lanes\n", vep.bus.mipi_csi2.num_data_lanes);
-			mvcam->lane_data_num = vep.bus.mipi_csi2.num_data_lanes;
-		}
-	}else{
-		dev_info(dev,"mvcam get endpoint node failed\n");
-		return -ENOENT;
-	}
     mutex_init(&mvcam->mutex);
 	
 	ret = mvcam_power_on(dev);
@@ -1484,7 +1538,11 @@ static int mvcam_probe(struct i2c_client *client,
 		ret = -ENODEV;
 		goto error_power_off;
 	}
-
+    mvcam_get_mipifeature(mvcam);
+    /* Check the hardware configuration in device tree */
+    if(mvcam_check_hwcfg(dev))
+		goto error_power_off;
+    
     mvcam_read(client, Sensor_Width, &mvcam->max_width);
     mvcam_read(client, Sensor_Height, &mvcam->max_height);
     if(mvcam->model_id == MV_MIPI_IMX178M){
@@ -1508,6 +1566,12 @@ static int mvcam_probe(struct i2c_client *client,
     }else if(mvcam->model_id == MV_MIPI_IMX287M){
         mvcam->min_width = MV_IMX287M_ROI_W_MIN;
         mvcam->min_height = MV_IMX287M_ROI_H_MIN;
+    }else if(mvcam->model_id == RAW_MIPI_IMX462M){
+        mvcam->min_width = RAW_IMX462M_ROI_W_MIN;
+        mvcam->min_height = RAW_IMX462M_ROI_H_MIN;
+    }else if(mvcam->model_id == RAW_MIPI_AR0234M){
+        mvcam->min_width = RAW_AR0234M_ROI_W_MIN;
+        mvcam->min_height = RAW_AR0234M_ROI_H_MIN;
     }
     v4l2_dbg(1, debug, mvcam->client, "%s: max width %d; max height %d\n",
 					__func__, mvcam->max_width,mvcam->max_height);

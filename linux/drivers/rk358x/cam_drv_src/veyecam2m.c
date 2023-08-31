@@ -512,6 +512,7 @@ static long veyecam2m_compat_ioctl32(struct v4l2_subdev *sd,
 				ret = -EFAULT;
 		}
 		kfree(ch_info);
+        break;
 	default:
 		ret = -ENOIOCTLCMD;
 		break;
