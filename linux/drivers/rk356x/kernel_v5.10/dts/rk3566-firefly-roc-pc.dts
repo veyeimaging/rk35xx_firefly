@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+ /dts-v1/;
+
+#include "rk3566-firefly-roc-pc.dtsi"
+
+/*
+*
+* using single camera xc7160        --->  rk3566-firefly-roc-pc-cam-8ms1m.dtsi
+* using single camera imx415        --->  rk3566-firefly-roc-pc-cam-imx415.dtsi
+* using dual camera gc2053/gc2093   --->  rk3566-firefly-roc-pc-cam-2ms2m.dtsi
+* using rk628d                      --->  rk3566-firefly-roc-pc-tf-hdmi-mipi-rk628.dtsi
+* using veye camera 2m              --->  rk3566-firefly-roc-pc-cam-veyecam2m.dtsi
+* using mv camera                   --->  rk3566-firefly-roc-pc-cam-veyemvcam.dtsi
+*
+*/
+//#include "rk3566-firefly-roc-pc-cam-8ms1m.dtsi"
+//#include "rk3566-firefly-roc-pc-cam-imx415.dtsi"
+//#include "rk3566-firefly-roc-pc-cam-veyecam2m.dtsi"
+#include "rk3566-firefly-roc-pc-cam-veyemvcam.dtsi"
+
+/ {
+    model = "Firefly RK3566-ROC-PC HDMI(Linux)";
+    compatible = "rockchip,rk3566-firefly-roc-pc", "rockchip,rk3566";
+};
+
+&route_hdmi {
+	status = "okay";
+	connect = <&vp0_out_hdmi>;
+};
