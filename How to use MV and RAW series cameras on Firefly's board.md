@@ -7,7 +7,7 @@ This is a mirror of [our wiki article](http://wiki.veye.cc/index.php/MV_Camera_o
 ## Overview
 The MV series and RAW series cameras are cameras designed for AI applications in the industrial field. They use the MIPI CSI-2 interface and are particularly suitable for use with embedded computing platforms. They have rich data formats and triggering features, extremely low latency, high bandwidth, and reliable stability.
 
-This article takes Firefly's ROC-RK3588S-PC motherboard as an example to introduce how to connect MV and RAW series cameras to the RK3588S/RK3588 system.
+This article takes Firefly's ROC-RK3566-PC and ROC-RK3588S-PC board as an example to introduce how to connect MV and RAW series cameras to the RK3566/3K3568 and RK3588S/RK3588 system.
 
 We provide drivers for the Linux operating system (using Ubuntu as an example).
 
@@ -28,16 +28,37 @@ In addition, the driver for the V-by-One HS connection mode has been finished on
 ## Hardware Setup
 
 The MV series and RAW series cameras require an ADP-MV2 adapter board to connect to the ROC-RK35xx-PC motherboard.
-### Connection of MV-MIPI-CAM and ADP-MV2
+### Connection of new version ADP-MV2
+#### Connection of MV-MIPI-CAM and ADP-MV2
+The two are connected using 0.5 mm pitch*30P FFC cable with opposite-side contacts. The cable must be inserted with the silver contacts facing outside.
+![ADP-MV2 to MV-MIPI-X](resources/ADP-MV2-V2_to_MV-MIPI-X.jpg)
+![ADP-MV2 to MV-MIPI-X 2](resources/ADP-MV2-V2_to_MV-MIPI-X_No.2.jpg)
+
+#### Connection of RAW-MIPI-SC132M and ADP-MV2
+The two are connected using 1.0 mm pitch*15P FFC cable with opposite-side contacts. The cable must be inserted with the silver contacts facing outside.
+![ADP-MV2 to RAW-MIPI-SC132M](resources/ADP-MV2_to_RAW-MIPI-SC132M.jpg)
+![ADP-MV2 to RAW-MIPI-SC132M 2](resources/ADP-MV2_to_RAW-MIPI-SC132M_No.2.jpg)
+
+#### Connection of other RAW series camera and ADP-MV2
+The two are connected using 0.5 mm pitch*pin FFC cable with opposite-side contacts. The cable must be inserted with the silver contacts facing outside.
+![ADP-MV2 to RAW-MIPI-X](resources/ADP-MV2_to_RAW_series_camera.jpg)
+![ADP-MV2 to RAW-MIPI-X 2](resources/ADP-MV2_to_RAW_series_camera_No.2.jpg)
+
+#### Connection with Main board using ADP-MV2
+
+![RK to ADP-MV2 and MV cam](resources/RK-ADP-MV2-MV-MIPI_01.jpg)
+
+### Connection of old version ADP-MV2
+#### Connection of MV-MIPI-CAM and ADP-MV2
 The two are connected using 0.5 mm pitch*30P FFC cable with opposite direction. The cable must be inserted with the silver contacts facing outside.
 ![ADP-MV2 to MV-MIPI-X](resources/ADP-MV2-MV-MIPI_01.jpg)
 ![ADP-MV2 to MV-MIPI-X 2](resources/ADP-MV2-MV-MIPI_02.jpg)
-### Connection of RAW-MIPI-CAM and ADP-MV2
+#### Connection of RAW-MIPI-CAM and ADP-MV2
 The two are connected using 1.0 mm pitch*15P FFC cable with opposite direction. The cable must be inserted with the silver contacts facing outside.
 ![ADP-MV2 to RAW-MIPI-X](resources/ADP-MV2-RAW-MIPI_02.jpg)
 ![ADP-MV2 to RAW-MIPI-X 2](resources/ADP-MV2-RAW-MIPI_01.jpg)
 
-### Connection with Main board using ADP-MV2
+#### Connection with Main board using ADP-MV2
 
 ![RK to ADP-MV2 and MV cam](resources/RK-ADP-MV2-MV-MIPI_01.jpg)
 
@@ -56,11 +77,11 @@ In addition, a compiled linux kernel installation package and Android image is p
 
 ## Upgrade Firefly Ubuntu system
 
-For the ROC-RK3588S-PC, we have provided an image of the release system.
+For the ROC-RK3566-PC and ROC-RK3588S-PC, we have provided an image of the release system.
 
-Download the latest rk358x_firefly_ubuntu.tar.gz from https://github.com/veyeimaging/rk35xx_firefly/releases/ .
+Download the latest Ubuntu imge from https://github.com/veyeimaging/rk35xx_firefly/releases/ .
 
-Refer to the [Firefly documentation](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/upgrade_bootmode.html) to burn in a standard system.
+Refer to the Firefly documentation [ ROC-RK3566-PC](https://wiki.t-firefly.com/en/ROC-RK3566-PC/03-upgrade_firmware.html) [ROC-RK3588S-PC](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/upgrade_bootmode.html) to burn in a standard system.
 
 ## Check system status
 ### Whether the camera is correctly recognized
@@ -78,6 +99,10 @@ mvcam 7-003b: camera is：MV-MIPI-IMX296M
 
 mvcam 7-003b: firmware version: 0x1290133
 ```
+On the ROC-RK3588S-PC, the camera is mounted on i2c-7, with an i2c address of 0x3b.
+
+On the ROC-RK3566-PC, the camera is mounted on i2c-4.
+
 - Check the video0 device node:
 ```
 ls /dev/video0
@@ -110,7 +135,7 @@ Taking the MV-MIPI-IMX296M as an example:
 ```
 You can see that:
 
-- The complete name of this entity is: `m00_b_mvcam 7-003b`.
+- The complete name of this entity is: `m00_b_mvcam 7-003b`.(It is m00_b_mvcam 4-003bon ROC-RK3566-PC.)
 - It is a V4L2 subdev (Sub-Device) Sensor.
 - Its corresponding node is `/dev/v4l-subdev2`, which can be opened and - configured by applications (such as `v4l2-ctl`).
 - Its output format is `[fmt:Y8_1X8/1456x1088@100/6000 field:none]`, where - `Y8_1X8` is a shorthand for a mbus-code, which will be listed in the next section of this article.
@@ -174,6 +199,17 @@ Also, y8 file can be used with this player: [YUV Displayer Deluxe](https://yuv-p
 
 ## Application examples
 ###  Configuring  global variables
+Based on the board model, configure the I2C_BUS global variable as follows:
+
+- ROC-RK3588S-PC
+```
+export I2C_BUS=7
+```
+- ROC-RK3566-PC
+```
+export I2C_BUS=4
+```
+
 For the convenience of later descriptions, global variables are configured here according to the sensor size.
 - MV-MIPI-IMX178M
 ```
@@ -278,9 +314,9 @@ Note that setting the ROI may affect the maximum frame rate, and the ROI paramet
 ### Set image format using media-ctl
 use the following command to configure the camera's data format, resolution, and frame rate using media-ctl:
 ```
-media-ctl -d /dev/media0 --set-v4l2 '"m00_b_mvcam 7-003b":0[fmt:Y8_1X8/'"$WIDTH"'x'"$HEIGHT"'@1/'"$FPS"']'
+media-ctl -d /dev/media0 --set-v4l2 '"m00_b_mvcam '"$I2C_BUS"'-003b":0[fmt:Y8_1X8/'"$WIDTH"'x'"$HEIGHT"'@1/'"$FPS"']'
 ```
-Among them: `"m00_b_mvcam 7-003b"` refers to the complete name of the camera entity, `Y8_1X8` is the mbus-code, `'"$WIDTH"'x'"$HEIGHT"'` indicates the resolution, `1/'"$FPS"'` indicates the resolution frame rate.
+Among them: `"m00_b_mvcam '"$I2C_BUS"'-003b"` refers to the complete name of the camera entity, `Y8_1X8` is the mbus-code, `'"$WIDTH"'x'"$HEIGHT"'` indicates the resolution, `1/'"$FPS"'` indicates the resolution frame rate.
 
 The width and height here cooperate with the `roi_x` and `roi_y` of the v4l2-ctl command to form the ROI parameter.
 
@@ -295,7 +331,7 @@ You can not only configure the data format, resolution, and frame rate in one co
 ```
 v4l2-ctl -d /dev/v4l-subdev2 --set-ctrl roi_x=0
 v4l2-ctl -d /dev/v4l-subdev2 --set-ctrl roi_y=0
-media-ctl -d /dev/media0 --set-v4l2 '"m00_b_mvcam 7-003b":0[fmt:Y8_1X8/'"$WIDTH"'x'"$HEIGHT"'@1/'"$FPS"']'
+media-ctl -d /dev/media0 --set-v4l2 '"m00_b_mvcam '"$I2C_BUS"'-003b":0[fmt:Y8_1X8/'"$WIDTH"'x'"$HEIGHT"'@1/'"$FPS"']'
 ```
 #### Frame rate statistics
 In streaming mode, the following commands can be used for frame rate statistics：
@@ -331,7 +367,7 @@ After setting data format, resolution, frame rate，run:
 #### Example of import image to OpenCV
 See the [samples](https://github.com/veyeimaging/rk356x_firefly/tree/main/linux/samples) directory on github for details.
 ```
-./v4l2dev_2_opencv_show_grey.py --width 1456 --height 1088 --fps 60
+./v4l2dev_2_opencv_show_grey.py --width 1456 --height 1088 --fps 60 --i2c 7
 ```
 #### Example of gstreamer application
 To facilitate installation and debugging, the MV series cameras provide UYVY mode, which supports a maximum width of 2880 and can be previewed in real time using the following command.
@@ -347,7 +383,7 @@ We provide several gstreamer routines that implement the preview function. See t
 ```
 v4l2-ctl -d /dev/v4l-subdev2 --set-ctrl roi_x=0
 v4l2-ctl -d /dev/v4l-subdev2 --set-ctrl roi_y=0
-media-ctl -d /dev/media0 --set-v4l2 '"m00_b_mvcam 7-003b":0[fmt:Y8_1X8/'"$WIDTH"'x'"$HEIGHT"'@1/'"$FPS"']'
+media-ctl -d /dev/media0 --set-v4l2 '"m00_b_mvcam '"$I2C_BUS"'-003b":0[fmt:Y8_1X8/'"$WIDTH"'x'"$HEIGHT"'@1/'"$FPS"']'
 ```
 #### Software trigger mode
 ##### Set mode
@@ -390,12 +426,18 @@ If you have any questions or suggestions about our existing software, please fee
 
 ## References
 - ROC-RK3588S-PC Manual
+https://wiki.t-firefly.com/en/ROC-RK3566-PC/
+
+- ROC-RK3588S-PC Manual
 https://wiki.t-firefly.com/en/ROC-RK3588S-PC/
 
 - Firefly Linux User Guide
 https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html
 
 ## Document History
+- 2024-04-17
+Support RK3566.
+
 - 2023-07-31
 Support V-by-One on ubuntu system.
 

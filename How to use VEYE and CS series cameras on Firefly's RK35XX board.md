@@ -45,14 +45,24 @@ In addition, a compiled linux kernel installation package and Android image is p
 #### Overview
 This section describes how to update the RK35xx system to support our camera modules.
 
-For some versions, we provide a deb installer that can be installed directly. For versions where no installer is provided, you will need to refer to later chapters to compile from the driver source code.
+For the kernel version 4.19, we provide a deb installation package that can be installed directly. For the kernel version 5.10, we provide a burning image.
+For versions where no installer is provided, you will need to refer to later chapters to compile from the driver source code.
 
 Although we are now using Ubuntu system as an example to introduce, other Linux distributions can also refer to this article.
 
-#### Burn Firefly standard system
+#### kernel version 5.10
+
+For the ROC-RK3588S-PC, we have provided an image of the release system.
+
+Download the latest released image file corresponding to the camera model you are using from https://github.com/veyeimaging/rk35xx_firefly/releases/ .
+
+Refer to the [Firefly documentation](https://wiki.t-firefly.com/en/ROC-RK3566-PC/03-upgrade_firmware.html) to burn in a standard system.
+
+#### kernel version 4.19
+##### Burn Firefly standard system
 Refer to the [Firefly documentation](https://wiki.t-firefly.com/en/ROC-RK3566-PC/01-bootmode.html) to burn in a standard system.
 
-#### Using prebuilt Image and dtb file
+##### Using prebuilt Image and dtb file
 Using the compiled debain installation package
 
 On the RK35xx board, 
@@ -214,6 +224,8 @@ https://github.com/veyeimaging/rk35xx_firefly/tree/main/android/rk358x/drivers
 [https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html](https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html)
 
 ## Document History
+- 2024-04-17
+Support kernel v5.10 on RK3566.
 - 2023-05-22
 Support Fpdlink-III on ubuntu system.
 - 2022-12-28
