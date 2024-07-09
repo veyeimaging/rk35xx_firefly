@@ -248,6 +248,7 @@ obj-$(CONFIG_VIDEO_ST_MIPID02) += st-mipid02.o
 obj-$(CONFIG_SDR_MAX2175) += max2175.o
 obj-$(CONFIG_VIDEO_XC7160) += xc7160.o
 obj-$(CONFIG_VIDEO_DS90UB954) += ds90ub954.o
+obj-$(CONFIG_VIDEO_VEYEVBYONE) += veye_vbyone.o
 obj-$(CONFIG_VIDEO_VEYECAM2M) += veyecam2m.o
 obj-$(CONFIG_VIDEO_VEYEMVCAM) += veye_mvcam.o
 obj-$(CONFIG_VIDEO_OTP_EEPROM)	+= otp_eeprom.o

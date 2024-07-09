@@ -1470,7 +1470,14 @@ config VIDEO_VEYEMVCAM
        depends on MEDIA_CAMERA_SUPPORT
        help
                Driver for veye mv series camera.
-               
+
+config VIDEO_VEYEVBYONE
+       tristate "VEYE V-by-One hs toolkit support."
+       depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+       depends on MEDIA_CAMERA_SUPPORT
+       help
+               Driver for vV-by-One hs toolkit .
+                              
 config VIDEO_OS03B10
 	tristate "OmniVision OS03B10 sensor support"
 	depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API

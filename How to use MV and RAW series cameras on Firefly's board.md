@@ -21,7 +21,11 @@ We provide drivers for the Linux operating system (using Ubuntu as an example).
 | MV Series  | MV-MIPI-IMX287M  | Done  |
 | MV Series  | MV-MIPI-IMX265M  | Done  |
 | MV Series  | MV-MIPI-IMX264M  | Done  |
-| RAW Series  | RAW-MIPI-SC132M	  | Done  |
+| RAW Series  | RAW-MIPI-SC132M  | Done  |
+| RAW Series  | RAW-MIPI-AR0234M  | Done  |
+| RAW Series  | RAW-MIPI-IMX462M  | Done  |
+| RAW Series  | RAW-MIPI-SC535M  | Done  |
+
 
 In addition, the driver for the V-by-One HS connection mode has been finished on the Ubuntu system.
 
@@ -254,6 +258,13 @@ export WIDTH=1080
 export HEIGHT=1280
 export FPS=120
 ```
+- RAW-MIPI-SC535M
+```
+export WIDTH=2432
+export HEIGHT=2048
+export FPS=100
+```
+
 ### Configure parameters using v4l2-ctl
 $ v4l2-ctl -d /dev/v4l-subdev2 -L
 ```
@@ -285,9 +296,9 @@ The following is an explanation of each parameter:
 
 #### Trigger Mode
 `v4l2-ctl --set-ctrl trigger_mode=[0-2]`
-0：Video streaming mode
-1：Normal trigger mode.
-2：High-speed continuous trigger mode.
+0: Video streaming mode
+1: Normal trigger mode.
+2: High-speed continuous trigger mode.
 
 #### Trigger Source
 `v4l2-ctl --set-ctrl trigger_src=[0-1]`
@@ -435,6 +446,9 @@ https://wiki.t-firefly.com/en/ROC-RK3588S-PC/
 https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html
 
 ## Document History
+- 2024-07-09
+Add support for RAW-MIPI-SC535M.
+
 - 2024-04-17
 Support RK3566.
 

@@ -403,7 +403,7 @@ static int veyecam2m_g_frame_interval(struct v4l2_subdev *sd,
 
 //#define veyecam2m_LANES 2
 //Please note that depending on the kernel version differences, this function may need to be either disabled or enabled.
-static int veyecam2m_g_mbus_config(struct v4l2_subdev *sd,
+/*static int veyecam2m_g_mbus_config(struct v4l2_subdev *sd,
                                  struct v4l2_mbus_config *config)
 {
         u32 val = 0;
@@ -420,7 +420,7 @@ static int veyecam2m_g_mbus_config(struct v4l2_subdev *sd,
         config->flags = val;
 
         return 0;
-}
+}*/
 
 static void veyecam2m_get_module_inf(struct veyecam2m *veyecam2m,
 				   struct rkmodule_inf *inf)
@@ -895,7 +895,7 @@ static const struct v4l2_subdev_core_ops veyecam2m_core_ops = {
 static const struct v4l2_subdev_video_ops veyecam2m_video_ops = {
 	.s_stream = veyecam2m_s_stream,
 	.g_frame_interval = veyecam2m_g_frame_interval,
-	.g_mbus_config = veyecam2m_g_mbus_config,
+	//.g_mbus_config = veyecam2m_g_mbus_config,
 };
 
 static const struct v4l2_subdev_pad_ops veyecam2m_pad_ops = {
