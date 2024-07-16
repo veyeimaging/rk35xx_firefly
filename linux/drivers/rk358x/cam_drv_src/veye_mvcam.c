@@ -39,7 +39,7 @@ versionlog v1.01.05
 	X is i2c bus number here.
 */
 
-#define DRIVER_VERSION			KERNEL_VERSION(1, 0x01, 0x05) 
+#define DRIVER_VERSION			KERNEL_VERSION(1, 0x01, 0x06) 
 
 
 #define mvcam_NAME			"mvcam"
@@ -1580,7 +1580,8 @@ static int mvcam_probe(struct i2c_client *client,
 	dev_info(dev, "veye mv series camera driver version: %02x.%02x.%02x\n",
 		DRIVER_VERSION >> 16,
 		(DRIVER_VERSION & 0xff00) >> 8,
-		DRIVER_VERSION & 0x00ff);    
+		DRIVER_VERSION & 0x00ff);
+
 	mvcam = devm_kzalloc(&client->dev, sizeof(struct mvcam), GFP_KERNEL);
 	if (!mvcam)
 		return -ENOMEM;

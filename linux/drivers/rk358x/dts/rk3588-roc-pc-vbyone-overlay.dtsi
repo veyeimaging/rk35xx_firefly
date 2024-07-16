@@ -23,7 +23,7 @@
     serializer {
         i2c-address=<0x34>;
         csi-lane-count = <2>;
-        csi-lane-speed = <1188>;
+        csi-lane-speed = <1500>;
         };
     };
 
