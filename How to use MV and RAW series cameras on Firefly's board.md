@@ -71,6 +71,7 @@ The two are connected using 1.0 mm pitch*15P FFC cable with opposite direction. 
 
 ## Introduction to github repositories
 
+https://github.com/veyeimaging/rk35xx_veye_bsp
 https://github.com/veyeimaging/rk35xx_firefly
 
 includes：

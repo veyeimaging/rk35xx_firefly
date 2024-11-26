@@ -151,11 +151,11 @@ In addition, [this page from Firefly](https://wiki.t-firefly.com/en/Firefly-Linu
 
 ###  Compile drivers and dtb from source code
 - RK356x
-
+https://github.com/veyeimaging/rk35xx_veye_bsp
 [https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk356x](https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk356x)
 
 - RK358x
-
+https://github.com/veyeimaging/rk35xx_veye_bsp
 [https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk358x](https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk358x)
 
 
