@@ -52,19 +52,6 @@ The two are connected using 0.5 mm pitch*pin FFC cable with opposite-side contac
 
 ![RK to ADP-MV2 and MV cam](resources/RK-ADP-MV2-MV-MIPI_01.jpg)
 
-### Connection of old version ADP-MV2
-#### Connection of MV-MIPI-CAM and ADP-MV2
-The two are connected using 0.5 mm pitch*30P FFC cable with opposite direction. The cable must be inserted with the silver contacts facing outside.
-![ADP-MV2 to MV-MIPI-X](resources/ADP-MV2-MV-MIPI_01.jpg)
-![ADP-MV2 to MV-MIPI-X 2](resources/ADP-MV2-MV-MIPI_02.jpg)
-#### Connection of RAW-MIPI-CAM and ADP-MV2
-The two are connected using 1.0 mm pitch*15P FFC cable with opposite direction. The cable must be inserted with the silver contacts facing outside.
-![ADP-MV2 to RAW-MIPI-X](resources/ADP-MV2-RAW-MIPI_02.jpg)
-![ADP-MV2 to RAW-MIPI-X 2](resources/ADP-MV2-RAW-MIPI_01.jpg)
-
-#### Connection with Main board using ADP-MV2
-
-![RK to ADP-MV2 and MV cam](resources/RK-ADP-MV2-MV-MIPI_01.jpg)
 
 ### V-by-One-HS-KIT Camera Connection Diagram
 ![VBYONE connection with rk3588](resources/VBYONE-connection-with-rk3588.jpg)
