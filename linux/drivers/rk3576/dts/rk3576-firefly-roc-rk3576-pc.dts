@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2024 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+/dts-v1/;
+
+/* Firefly */
+#define N_LED 1 
+#define N_ES8388 1
+#define N_RTC 1 
+#define N_WATCH_DOG 1 
+#define RECOVERY_KEY 1
+#define SDCARD 1
+#define DP 1
+#define WIFI_BT 1
+#define HDMI 1
+#define CONTROLLER1_USBA30 1
+#define CONTROLLER0_TYPEC_FULL 1
+#define UFS 1
+#define PCIE 0
+#define SATA 1
+#define GMAC0 1
+#define GMAC1 0
+#define FAN 1
+
+#include "rk3576-firefly-roc-rk3576-pc.dtsi"
+//#include "rk3576-roc-pc-cam-8ms1m.dtsi"
+#include "rk3576-roc-pc-cam-cam1-veyemv.dtsi"
+//#include "rk3576-roc-pc-cam-cam1-veyecam2m.dtsi"
+// #include "rk3576-firefly-roc-rk3576-pc-mipi101-M101014-BE45-A1.dtsi"
+#include "rk3576-firefly-roc-rk3576-pc-mipi101-BSD1218-A101KL68.dtsi"
+#include "rk3576-firefly-roc-rk3576-pc-tf-hdmi-mipi-rk628.dtsi"
+#include "rk3576-firefly-roc-rk3576-pc-cam-imx415.dtsi"
+
+/ {
+	model = "Firefly ROC-RK3576-PC Linux HDMI";
+	compatible = "rockchip,rk3576-firefly-roc-rk3576-pc", "rockchip,rk3576";
+};

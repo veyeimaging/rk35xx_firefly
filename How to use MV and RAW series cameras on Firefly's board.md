@@ -7,7 +7,7 @@ This is a mirror of [our wiki article](http://wiki.veye.cc/index.php/MV_Camera_o
 ## Overview
 The MV series and RAW series cameras are cameras designed for AI applications in the industrial field. They use the MIPI CSI-2 interface and are particularly suitable for use with embedded computing platforms. They have rich data formats and triggering features, extremely low latency, high bandwidth, and reliable stability.
 
-This article takes Firefly's ROC-RK3566-PC and ROC-RK3588S-PC board as an example to introduce how to connect MV and RAW series cameras to the RK3566/3K3568 and RK3588S/RK3588 system.
+This article takes Firefly's ROC-RK3566-PC,ROC-RK3576-PCand ROC-RK3588S-PC board as an example to introduce how to connect MV and RAW series cameras to the RK3566/3K3568 ,RK3576 and RK3588S/RK3588 system.
 
 We provide drivers for the Linux operating system (using Ubuntu as an example).
 
@@ -21,6 +21,7 @@ We provide drivers for the Linux operating system (using Ubuntu as an example).
 | MV Series  | MV-MIPI-IMX287M  | Done  |
 | MV Series  | MV-MIPI-IMX265M  | Done  |
 | MV Series  | MV-MIPI-IMX264M  | Done  |
+| MV Series  | MV-MIPI-GMAX4002M  | Done  |
 | RAW Series  | RAW-MIPI-SC132M  | Done  |
 | RAW Series  | RAW-MIPI-AR0234M  | Done  |
 | RAW Series  | RAW-MIPI-IMX462M  | Done  |
@@ -69,11 +70,11 @@ In addition, a compiled linux kernel installation package and Android image is p
 
 ## Upgrade Firefly Ubuntu system
 
-For the ROC-RK3566-PC and ROC-RK3588S-PC, we have provided an image of the release system.
+For the ROC-RK3566-PC,ROC-RK3576-PC and ROC-RK3588S-PC, we have provided an image of the release system.
 
 Download the latest Ubuntu imge from https://github.com/veyeimaging/rk35xx_firefly/releases/ .
 
-Refer to the Firefly documentation [ ROC-RK3566-PC](https://wiki.t-firefly.com/en/ROC-RK3566-PC/03-upgrade_firmware.html) [ROC-RK3588S-PC](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/upgrade_bootmode.html) to burn in a standard system.
+Refer to the Firefly documentation [ ROC-RK3566-PC](https://wiki.t-firefly.com/en/ROC-RK3566-PC/03-upgrade_firmware.html) [ROC-RK3588S-PC](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/upgrade_bootmode.html) [ROC-RK3576-PC](https://wiki.t-firefly.com/en/ROC-RK3576-PC/upgrade_bootmode.html) to burn in a standard system.
 
 ## Check system status
 ### Whether the camera is correctly recognized
@@ -93,7 +94,7 @@ mvcam 7-003b: firmware version: 0x1290133
 ```
 On the ROC-RK3588S-PC, the camera is mounted on i2c-7, with an i2c address of 0x3b.
 
-On the ROC-RK3566-PC, the camera is mounted on i2c-4.
+On the ROC-RK3566-PC and ROC-RK3576-PC, the camera is mounted on i2c-4.
 
 - Check the video0 device node:
 ```
@@ -104,7 +105,62 @@ You should see:
 video0
 ```
 After successfully identifying the camera, the camera will be recognized as /dev/video0.
+### State Detection and Environment Variable Configuration
 
+[Here](https://github.com/veyeimaging/rk35xx_veye_bsp/tree/main/mv_tools_rockchip/i2c_tools), we provide an mv_probe.sh script that automatically detects the connected camera and configures environment variables with its default model, width, height, frame rate, and other information.
+
+Usage:
+```
+source ./mv_probe.sh
+```
+A typical output:
+```
+$ source ./mv_probe.sh
+
+The mvcam driver is loaded on i2c-10, but the camera is not detected!
+
+Found veye_mvcam camera on i2c-11.
+
+Setenv CAMERAMODEL = RAW-MIPI-SC535M
+
+Setenv FPS = 49
+
+Setenv HEIGHT = 2048
+
+Setenv WIDTH = 2432
+```
+You can verify the environment variable output using:
+```
+echo $CAMERAMODEL
+```
+Note that these environment variables are only valid for the current session.
+
+**Important Notes:**
+
+This script requires the mvcam driver version **1.1.06 or later**.
+If your driver version is earlier than 1.1.06 or you need to use different width, height, or frame rate values, refer to the camera module manual and manually configure the following environment variables. Otherwise, subsequent programs may not function correctly.
+
+Example:
+```
+export WIDTH=2432
+
+export HEIGHT=2048
+
+export FPS=50
+```
+Configuring  global variables
+
+Based on the board model, configure the I2C_BUS global variable as follows:
+
+- ROC-RK3588S-PC
+```
+export I2C_BUS=7
+```
+
+- ROC-RK3566-PC and ROC-RK3576-PC
+```
+export I2C_BUS=4
+```
 ### Using media-ctl to view topology
 
 Using the media-ctl command can clearly display the current topography structure.
@@ -190,69 +246,6 @@ We recommend using [vooya](https://www.offminor.de/) as the player, which suppor
 Also, y8 file can be used with this player: [YUV Displayer Deluxe](https://yuv-player-deluxe.software.informer.com/2.6/).
 
 ## Application examples
-###  Configuring  global variables
-Based on the board model, configure the I2C_BUS global variable as follows:
-
-- ROC-RK3588S-PC
-```
-export I2C_BUS=7
-```
-- ROC-RK3566-PC
-```
-export I2C_BUS=4
-```
-
-For the convenience of later descriptions, global variables are configured here according to the sensor size.
-- MV-MIPI-IMX178M
-```
-export WIDTH=3088
-export HEIGHT=2064
-export FPS=22
-```
-- MV-MIPI-SC130M
-```
-export WIDTH=1280
-export HEIGHT=1024
-export FPS=108
-```
-- MV-MIPI-IMX296M
-```
-export WIDTH=1456
-export HEIGHT=1088
-export FPS=60
-```
-- MV-MIPI-IMX287M
-```
-export WIDTH=704
-export HEIGHT=544
-export FPS=319
-```
-
-- MV-MIPI-IMX265M
-```
-export WIDTH=2048
-export HEIGHT=1544
-export FPS=45
-```
-- MV-MIPI-IMX264M
-```
-export WIDTH=2432
-export HEIGHT=2056
-export FPS=28
-```
-- RAW-MIPI-SC132M
-```
-export WIDTH=1080
-export HEIGHT=1280
-export FPS=120
-```
-- RAW-MIPI-SC535M
-```
-export WIDTH=2432
-export HEIGHT=2048
-export FPS=100
-```
-
 ### Configure parameters using v4l2-ctl
 $ v4l2-ctl -d /dev/v4l-subdev2 -L
 ```
@@ -424,16 +417,22 @@ We are committed to providing richer possibilities for image applications on emb
 If you have any questions or suggestions about our existing software, please feel free to submit them to the [forum](http://forum.veye.cc/) or email our technical staff at xumm#csoneplus.com.
 
 ## References
-- ROC-RK3588S-PC Manual
+- ROC-RK3566-PC Manual
 https://wiki.t-firefly.com/en/ROC-RK3566-PC/
 
 - ROC-RK3588S-PC Manual
 https://wiki.t-firefly.com/en/ROC-RK3588S-PC/
 
+- ROC-RK3576-PC Manual
+https://wiki.t-firefly.com/en/ROC-RK3576-PC/
+
 - Firefly Linux User Guide
 https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html
 
 ## Document History
+- 2025-04-14
+Add support for RK3576.
+
 - 2024-07-09
 Add support for RAW-MIPI-SC535M.
 

@@ -4,7 +4,7 @@ This is a mirror of [our wiki article](http://wiki.veye.cc/index.php/VEYE_CS_Cam
 [toc]
 
 ## Overview
-VEYE series and CS series cameras are the video streaming mode MIPI cameras we designed. This article takes Firefly's ROC-RK3566-PC and ROC-RK3588S-PC board as an example to introduce how to connect VEYE and CS series cameras to RK3566/RK3568/RK3588 system.
+VEYE series and CS series cameras are the video streaming mode MIPI cameras we designed. This article takes Firefly's ROC-RK3566-PC,ROC-RK3576-PC and ROC-RK3588S-PC board as an example to introduce how to connect VEYE and CS series cameras to RK3566/RK3568/RK3576/RK3588 system.
 We provide drivers for both Linux(Ubuntu) and Android.
 ## Camera Module List
 
@@ -45,14 +45,14 @@ In addition, a compiled linux kernel installation package and Android image is p
 #### Overview
 This section describes how to update the RK35xx system to support our camera modules.
 
-For the kernel version 4.19, we provide a deb installation package that can be installed directly. For the kernel version 5.10, we provide a burning image.
+For the kernel version 4.19, we provide a deb installation package that can be installed directly. For the kernel version 5.10 and 6.1, we provide a burning image.
 For versions where no installer is provided, you will need to refer to later chapters to compile from the driver source code.
 
 Although we are now using Ubuntu system as an example to introduce, other Linux distributions can also refer to this article.
 
-#### kernel version 5.10
+#### kernel version 5.10 and 6.1
 
-For the ROC-RK3588S-PC, we have provided an image of the release system.
+For the ROC-RK3588S-PC and ROC-RK3576-PC, we have provided an image of the release system.
 
 Download the latest released image file corresponding to the camera model you are using from https://github.com/veyeimaging/rk35xx_firefly/releases/ .
 
@@ -77,9 +77,9 @@ sudo dpkg -i linux-image-4.19.232_4.19.232-21_arm64.deb
 ```
 If the version does not match, it needs to be compiled from the source code.
 
-### Upgrade Firefly Ubuntu system(RK358x)
+### Upgrade Firefly Ubuntu system(RK358x and RK3576)
 
-For the ROC-RK3588S-PC, we have provided an image of the release system. 
+For the ROC-RK3588S-PC and ROC-RK3576-PC, we have provided an image of the release system. 
 Download the latest rk358x_firefly_ubuntu.tar.gz from https://github.com/veyeimaging/rk356x_firefly/releases/ .
 
 Refer to the [Firefly documentation](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/upgrade_bootmode.html) to burn in a standard system.
@@ -102,7 +102,7 @@ The output message appears as shown below.
 
 `video0`
 
-For ROC-RK3566-PC, the camera is connected to i2c-4, for ROC-RK3588S-PC to i2c-7.
+For ROC-RK3566-PC and ROC-RK3576-PC, the camera is connected to i2c-4, for ROC-RK3588S-PC to i2c-7.
 
 ### Samples
 #### v4l2-ctl
@@ -158,6 +158,9 @@ https://github.com/veyeimaging/rk35xx_veye_bsp
 https://github.com/veyeimaging/rk35xx_veye_bsp
 [https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk358x](https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk358x)
 
+- RK3576
+https://github.com/veyeimaging/rk35xx_veye_bsp
+[https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk3576](https://github.com/veyeimaging/rk35xx_firefly/tree/main/linux/drivers/rk3576)
 
 ## i2c script for parameter configuration
 
@@ -219,11 +222,15 @@ https://github.com/veyeimaging/rk35xx_firefly/tree/main/android/rk358x/drivers
 - ROC-RK3566-PC Manual
 [https://wiki.t-firefly.com/en/ROC-RK3566-PC/](https://wiki.t-firefly.com/en/ROC-RK3566-PC/)
 - ROC-RK3588S-PC Manual
-[https://wiki.t-firefly.com/en/ROC-RK3588S-PC/](https://wiki.t-firefly.com/en/ROC-RK3588S-PC/)
+[https://wiki.t-firefly.com/en/ROC-RK3588S-PC/](https://wiki.t-firefly.com/en/ROC-RK3576-PC/)
+- ROC-RK3588S-PC Manual
+[https://wiki.t-firefly.com/en/ROC-RK3576-PC/](https://wiki.t-firefly.com/en/ROC-RK3576-PC/)
 - Firefly Linux User Guide
 [https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html](https://wiki.t-firefly.com/en/Firefly-Linux-Guide/index.html)
 
 ## Document History
+- 2025-04-14
+Support kernel v6.1 on RK3576.
 - 2024-04-17
 Support kernel v5.10 on RK3566.
 - 2023-05-22
