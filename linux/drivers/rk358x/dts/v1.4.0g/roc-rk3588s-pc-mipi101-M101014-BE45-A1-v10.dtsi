@@ -13,7 +13,7 @@
 //#include "rk3588-roc-pc-fpdlink-90ub954.dtsi"
 
 //open this line to enable v-by-one hs link
-#include "rk3588-roc-pc-vbyone-overlay.dtsi"
+//#include "rk3588-roc-pc-vbyone-overlay.dtsi"
 
 //#include "rk3588-roc-pc-cam-veyecam2m.dtsi"
 //#include "rk3588-roc-pc-cam-veyemvcam.dtsi"
