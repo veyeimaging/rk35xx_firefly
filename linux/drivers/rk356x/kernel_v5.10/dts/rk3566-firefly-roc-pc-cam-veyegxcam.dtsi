@@ -1,0 +1,140 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2022 www.veye.cc
+ *
+ */
+
+&csi2_dphy0 {
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mipi_in_ucam3: endpoint@4 {
+				reg = <4>;
+				remote-endpoint = <&gxcam_out>;
+				data-lanes = <1 2>;
+			};
+		};
+		port@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			csidphy0_out: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&mipi_csi2_input>;
+			};
+		};
+	};
+};
+
+&csi2_dphy1 {
+	status = "disabled";
+};
+
+&csi2_dphy2 {
+	status = "disabled";
+};
+
+
+&i2c4 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	gxcam: gxcam@3b{
+        status = "okay";
+        compatible = "veye,gxcam";
+        reg = <0x3b>;
+        clocks = <&cru CLK_CIF_OUT>;
+        clock-names = "xvclk";
+        //avdd-supply = <&vcc_mipi>;
+        power-domains = <&power RK3568_PD_VI>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&cif_clk>;
+
+        //power-gpios = <&pca9555 PCA_IO0_4 GPIO_ACTIVE_HIGH>;
+        reset-gpios = <&gpio4 RK_PB0 GPIO_ACTIVE_HIGH>;
+        pwdn-gpios = <&gpio4 RK_PB7 GPIO_ACTIVE_HIGH>;
+
+        firefly,clkout-enabled-index = <0>;
+        rockchip,camera-module-index = <0>;
+        rockchip,camera-module-facing = "back";
+        rockchip,camera-module-name = "NC";
+        rockchip,camera-module-lens-name = "NC";
+        port {
+			gxcam_out: endpoint {
+				remote-endpoint = <&mipi_in_ucam3>;
+                data-lanes = <1 2>;
+            };
+        };
+    };
+};
+
+&mipi_csi2 {
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mipi_csi2_input: endpoint@1 {
+				reg = <1>;
+				remote-endpoint = <&csidphy0_out>;
+			};
+		};
+
+		port@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mipi_csi2_output: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&cif_mipi2_in0>;
+			};
+		};
+	};
+};
+
+&rkcif {
+	status = "okay";
+//	memory-region = <&cif_reserved>;
+};
+&rkcif_mipi_lvds {
+	status = "okay";
+
+	port {
+		cif_mipi2_in0: endpoint {
+			remote-endpoint = <&mipi_csi2_output>;
+		};
+	};
+};
+&rkcif_mipi_lvds_sditf {
+	status = "disabled";
+
+};
+&rkcif_mmu {
+	status = "okay";
+};
+&rkisp {
+	status = "disabled";
+};
+
+&rkisp_vir0 {
+	status = "disabled";
+};
+
+&rkisp_vir1 {
+	status = "disabled";
+};

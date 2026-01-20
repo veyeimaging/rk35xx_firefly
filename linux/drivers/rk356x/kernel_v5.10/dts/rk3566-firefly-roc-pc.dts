@@ -16,6 +16,7 @@
 * using rk628d                      --->  rk3566-firefly-roc-pc-tf-hdmi-mipi-rk628.dtsi
 * using veye camera 2m              --->  rk3566-firefly-roc-pc-cam-veyecam2m.dtsi
 * using mv camera                   --->  rk3566-firefly-roc-pc-cam-veyemvcam.dtsi
+* using gx camera                   --->  rk3566-firefly-roc-pc-cam-veyegxcam.dtsi
 *
 */
 //#include "rk3566-firefly-roc-pc-cam-8ms1m.dtsi"

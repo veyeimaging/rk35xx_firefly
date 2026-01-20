@@ -25,10 +25,19 @@
 #define GMAC1 0
 #define FAN 1
 
+/*
+*
+* using single camera xc7160        --->  rk3576-roc-pc-cam-8ms1m.dtsi
+* using veye camera 2m              --->  rk3576-roc-pc-cam-cam1-veyecam2m.dtsi
+* using mv camera                   --->  rk3576-roc-pc-cam-cam1-veyemvcam.dtsi
+* using gx camera                   --->  rk3576-roc-pc-cam-cam1-veyegxcam.dtsi
+*
+*/
 #include "rk3576-firefly-roc-rk3576-pc.dtsi"
 //#include "rk3576-roc-pc-cam-8ms1m.dtsi"
-#include "rk3576-roc-pc-cam-cam1-veyemv.dtsi"
+#include "rk3576-roc-pc-cam-cam1-veyemvcam.dtsi"
 //#include "rk3576-roc-pc-cam-cam1-veyecam2m.dtsi"
+//#include "rk3576-roc-pc-cam-cam1-veyegxcam.dtsi"
 // #include "rk3576-firefly-roc-rk3576-pc-mipi101-M101014-BE45-A1.dtsi"
 #include "rk3576-firefly-roc-rk3576-pc-mipi101-BSD1218-A101KL68.dtsi"
 #include "rk3576-firefly-roc-rk3576-pc-tf-hdmi-mipi-rk628.dtsi"

@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2023 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+/dts-v1/;
+
+#define FF_LEDS
+#define FF_FAN
+#define FF_HDMI0
+#define FF_DSI0
+//#define FF_DSI1
+#define FF_SDCARD
+#define FF_TYPEC0
+#define FF_USB30
+#define FF_USB20_HOST0
+#define FF_USB20_HOST1
+#define FF_CODEC_ES8388
+#define FF_GMAC1
+#define FF_SATA0 // M.2 slot, mux with pcie2x1l2
+//#define FF_PCIE2_1L2 // M.2 slot, mux with sata0
+#define FF_RECOVERY_KEY
+#define FF_RTC
+
+#include "rk3588-firefly-roc-rk3588s-pc.dtsi"
+#include "rk3588-firefly-roc-rk3588s-pc-mipi101-BSD1218-A101KL68.dtsi" // 10.1 inch mipi touchscreen
+//#include "rk3588-firefly-roc-rk3588s-pc-cam-8ms1m.dtsi" // Use 8MS1M (800w px camera x 1)
+//#include "rk3588-firefly-roc-rk3588s-pc-cam-imx415.dtsi"
+#include "rk3588-firefly-roc-rk3588s-pc-cam-veyegxcam.dtsi"
+#include "roc-rk3588s-pc-tf-hdmi-mipi-rk628.dtsi"
+//#include "rk3588-firefly-roc-rk3588s-pc-cam-imx586.dtsi"
+//#include "rk3588-firefly-roc-rk3588s-pc-cam-2ms2mf.dtsi" // Or use 2MS1MF (200w px camera x 2)
+
+
+/ {
+	model = "Firefly ROC-RK3588S-PC";
+	compatible = "rockchip,roc-rk3588s-pc", "rockchip,rk3588";
+};
